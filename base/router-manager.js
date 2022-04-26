@@ -2,21 +2,21 @@ const path = require("path");
 const fs = require('fs');
 const log = require('./log');
 const annotation = require('./annotation');
-const error = require("./error");
+const Error = require("./error");
 
 function routerManager() {
     let instance = this;
     // load controller files
     this.init = (core) => {
-        const controllerPath = path.join(appRootDir, 'controller');
+        const controllerPath = path.join(config.app_root, 'controller');
         fs.readdir(controllerPath,async function (err, files) {
             //handling error
             if (err) {
                 log.error('Unable to list files on directory: ' + err);
             } else {
-                await files.forEach(async function (file) {
+                await files.forEach(async file => {
                     // parse annotation files
-                    await annotation.parse(path.join(controllerPath, file), function (err, annotations) {
+                    await annotation.parse(path.join(controllerPath, file), (err, annotations) => {
                         if (err) {
                             log.error(err)
                             return;
@@ -77,9 +77,9 @@ function routerManager() {
                     });
                 });
                 // load error catch routes
-                core.expressInstance.use(function (req, res, next) {
+                core.expressInstance.use((req, res, next) => {
                     // catch 404 and forward to error handler
-                    let err = new error('Service or method not found', 404);
+                    let err = new Error('Service or method not found', 404);
                     sendJson(res, err, 404);
                     next();
                 });
@@ -97,9 +97,9 @@ function routerManager() {
         for (let i = 0, j = functionKeys.length; i < j; i++) {
             let functionAnnotationKey = functionKeys[i];
             if (Object.keys(annotations.functions[functionAnnotationKey]).contains('controller')) routeInfo.controllerRoute = {
-                fname: functionAnnotationKey, data: annotations.functions[functionAnnotationKey]
+                "fname": functionAnnotationKey, data: annotations.functions[functionAnnotationKey]
             }; else routeInfo.routes.push({
-                fname: functionAnnotationKey, data: annotations.functions[functionAnnotationKey]
+                "fname": functionAnnotationKey, data: annotations.functions[functionAnnotationKey]
             });
         }
         if (!routeInfo.controllerRoute) {
@@ -110,4 +110,4 @@ function routerManager() {
     };
 }
 
-module.exports = new routerManager;
+module.exports = new routerManager();

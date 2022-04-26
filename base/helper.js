@@ -9,12 +9,12 @@ String.prototype.replaceAll = function (search, replacement) {
 };
 
 String.prototype.indexOfRegex = function(regex){
-    var match = this.match(regex);
+    let match = this.match(regex);
     return match ? this.indexOf(match[0]) : -1;
 }
 
 String.prototype.lastIndexOfRegex = function(regex){
-    var match = this.match(regex);
+    let match = this.match(regex);
     return match ? this.lastIndexOf(match[match.length-1]) : -1;
 }
 
@@ -50,3 +50,23 @@ global.isObject = function(obj) {
 global.isDate = function(obj) {
     return (obj instanceof Date);
 };
+
+global.extend = function (target) {
+    if (target == null) return;
+    let sources = [].slice.call(arguments, 1);
+    sources.forEach(function (source) {
+        for (let prop in source) {
+            target[prop] = source[prop];
+        }
+    });
+    return target;
+};
+
+global.camelToSnakeCase = str => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+global.snakeToCamelCase = str =>
+    str.toLowerCase().replace(/([-_][a-z])/g, group =>
+        group
+            .toUpperCase()
+            .replace('-', '')
+            .replace('_', '')
+    );

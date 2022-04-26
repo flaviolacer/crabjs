@@ -10,22 +10,23 @@ function core() {
     this.express = express;
     this.expressInstance = express();
     let expressInstance = this.expressInstance;
+    this.server = null;
 
     /**
      * Start express server on predfined ports
      */
-    let startServer = () => {
-        let port = normalizePort(process.env.PORT || '3000');
+    this.startServer = () => {
+        let port = normalizePort(config.server_port || process.env.SERVER_PORT || '3000');
         expressInstance.set('port', port);
-        let server = http.createServer(expressInstance);
+        this.server = http.createServer(expressInstance);
         // set default timeout
-        server.setTimeout(300000);
+        this.server.setTimeout(config.server_timeout);
         /**
          * Listen on provided port, on all network interfaces.
          */
-        server.listen(port);
-        server.on('error', onError);
-        server.on('listening', onListening);
+        this.server.listen(port);
+        this.server.on('error', onError);
+        this.server.on('listening', onListening);
         /**
          * Normalize a port into a number, string, or false.
          */
@@ -82,7 +83,7 @@ function core() {
                 ? 'pipe ' + addr
                 : addr.port;
             let host = addr.address;
-            localAddresses = ['::','127.0.0.1'];
+            let localAddresses = ['::','127.0.0.1'];
             host = (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
 
             log.info('\x1b[33m%s\x1b[0m', '--------------------------------------------------');
@@ -92,9 +93,19 @@ function core() {
         }
     }
 
+    /**
+     * Stop express server , just for tests
+     */
+    this.stopServer = () => {
+        this.server.close();
+    }
+
+    /**
+     * Initialize express server
+     */
     this.initExpress = () => {
         // set views dir and template engine
-        expressInstance.set('express/views', path.join(__dirname, 'views'));
+        expressInstance.set('views', path.join(__dirname, 'views'));
         let ejs = require('ejs');
         expressInstance.engine('html', ejs.renderFile);
         expressInstance.set('view engine', 'html');
@@ -102,7 +113,7 @@ function core() {
         //expressInstance.use(logger('Response time\: :response-time\\n'));
         // catch not found
         // start server
-        startServer();
+        this.startServer();
     }
 }
 

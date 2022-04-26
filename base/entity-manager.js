@@ -6,7 +6,7 @@ const annotation = require('./annotation');
 function entityManager() {
     // load entity files
     this.init = (core) => {
-        const entityPath = path.join(appRootDir, 'entity');
+        const entityPath = path.join(config.app_root, 'entity');
         fs.readdir(entityPath, function (err, files) {
             //handling error
             if (err) {
@@ -32,4 +32,4 @@ function entityManager() {
     }
 }
 
-module.exports = new entityManager;
+module.exports = new entityManager();

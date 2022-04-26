@@ -1,0 +1,8 @@
+{
+  "server_config_filename" : "crabjs.json",
+  "server_port": 3000,
+  "server_timeout": 300000,
+  "plugins": {
+    "jwt": true
+  }
+}

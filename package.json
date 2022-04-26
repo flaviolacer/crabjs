@@ -5,11 +5,22 @@
     "cjs": "./cli/run.js"
   },
   "dependencies": {
+    "dotenv-defaults": "^5.0.0",
     "ejs": "^3.1.7",
     "express": "^4.17.3",
     "handlebars": "^4.7.7",
     "morgan": "^1.10.0",
     "path": "^0.12.7"
   },
-  "keywords": ["api", "framework", "annotation"]
+  "keywords": [
+    "api",
+    "framework",
+    "annotation"
+  ],
+  "devDependencies": {
+    "mocha": "^9.2.2"
+  },
+  "scripts": {
+    "test": "mocha"
+  }
 }

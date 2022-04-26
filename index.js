@@ -1,17 +1,31 @@
 /// start CrabJS
-const helpers = require("./base/helper")
+require("./base/helper")
+const path = require("path");
+const fs = require('fs');
+const log = require('./base/log');
+global.config = require("./defaults.json")
 let core = require("./base/core");
 let entityManager = require("./base/entity-manager");
 let routerManager = require("./base/router-manager");
 
 exports.start = function(appDir) {
-    global.appRootDir = appDir;
-    console.log("Initializing CrabJS...");
-    console.log("Loading Libraries...");
+    // global config
+    global.config.app_root = (appDir);
+
+    // check if custom config exists
+    let customConfigFilename = path.join(config.app_root,config.server_config_filename);
+    if (fs.existsSync(customConfigFilename)) {
+        let custom_config = require(customConfigFilename);
+        // merge config session
+        extend(global.config, custom_config);
+    }
+
+    log.info("Initializing CrabJS...");
+    log.info("Loading Libraries...");
     // initializing express server
     core.initExpress();
-    console.log("Loading Entities...");
+    log.info("Loading Entities...");
     entityManager.init(core);
-    console.log("Loading Routes...");
+    log.info("Loading Routes...");
     routerManager.init(core);
 }
