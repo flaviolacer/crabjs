@@ -1,0 +1,11 @@
+CrabJS command line examples:
+
+create controller [name]        to create a name controller to project
+create entity [name]            to create an entity to project
+-h |--help                      show this information
+
+# to create controller
+cjs create controller mycontroller
+
+# to create entity
+cjs create entity myentity

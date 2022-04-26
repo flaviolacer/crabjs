@@ -3,7 +3,10 @@ function log() {
         console.log(...args);
     }
     this.error = (...args) => {
-        console.error(...args);
+        console.log("\x1b[31m%s\x1b[0m",...args);
+    }
+    this.warn = (...args) => {
+        console.log("\x1b[33m%s\x1b[0m",...args);
     }
 }
 

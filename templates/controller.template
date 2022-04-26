@@ -1,0 +1,17 @@
+/**
+ * @Controller
+ * @route('/{{name}}')
+ */
+function {{name}}() {
+    //Uncomment this to test your controller
+    /**
+     *
+     * @route('/')
+     * @method('GET')
+     */
+    //this.index = function (req, res) {
+    //   res.send("alive");
+    //}
+}
+
+module.exports = {{name}};

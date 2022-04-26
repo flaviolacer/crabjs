@@ -1,0 +1,13 @@
+/**
+ * @Entity
+ * @name = '{{name}}'
+ */
+function {{name}}() {
+     /** @field */
+    let name;
+
+    /** @field */
+    let description;
+}
+
+module.exports = {{name}};
