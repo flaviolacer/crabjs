@@ -12,9 +12,9 @@ function entityManager() {
             if (err) {
                 log.error('Unable to list files on directory: ' + err);
             } else
-            files.forEach(function (file) {
+            files.forEach(async function (file) {
                 // parse annotation files
-                annotation.parse(path.join(entityPath, file), function(err, annotations) {
+                await annotation.parse(path.join(entityPath, file), function(err, annotations) {
                     if (err) {
                         log.error(err)
                         return;

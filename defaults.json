@@ -2,6 +2,11 @@
   "server_config_filename" : "crabjs.json",
   "server_port": 3000,
   "server_timeout": 300000,
+  "server_controllers_path": "controller",
+  "server_entities_path": "entity",
+  "debug" : {
+    "level" : "error"
+  },
   "plugins": {
     "jwt": true
   }

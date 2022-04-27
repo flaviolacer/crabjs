@@ -6,17 +6,22 @@ const Error = require("./error");
 
 function routerManager() {
     let instance = this;
-    // load controller files
+    /**
+     * Load controller files
+     * @param core
+     */
     this.init = (core) => {
-        const controllerPath = path.join(config.app_root, 'controller');
-        fs.readdir(controllerPath,async function (err, files) {
+        if (isEmpty(config.server_controllers_path) || config.server_controllers_path.startsWith('.') || !config.server_controllers_path.startsWith('/'))
+            config.server_controllers_path = path.join(config.app_root, config.server_controllers_path);
+
+        fs.readdir(config.server_controllers_path,async function (err, files) {
             //handling error
             if (err) {
                 log.error('Unable to list files on directory: ' + err);
             } else {
                 await files.forEach(async file => {
                     // parse annotation files
-                    await annotation.parse(path.join(controllerPath, file), (err, annotations) => {
+                    await annotation.parse(path.join(config.server_controllers_path, file), (err, annotations) => {
                         if (err) {
                             log.error(err)
                             return;
@@ -35,7 +40,7 @@ function routerManager() {
                             let newRoute = core.express.Router();
 
                             // get controller instantiated
-                            let routerFileInstantiated = require(path.join(controllerPath, file));
+                            let routerFileInstantiated = require(path.join(config.server_controllers_path, file));
                             if (routerFileInstantiated.constructor.name.toLowerCase() === "function") routerFileInstantiated = new routerFileInstantiated();
 
                             if (isEmpty(routerFileInstantiated)) {
@@ -58,12 +63,12 @@ function routerManager() {
 
                                 let routerMethodFunction = newRoute[route.data.method.toLowerCase()];
                                 if (!routerMethodFunction) {
-                                    log.error(`Express method function (${route.data.method.toLowerCase()}) not found at "${route.fname}" on controller "${routesInfo.controllerRoute.fname}"\n`);
+                                    log.warn(`Express method function (${route.data.method.toLowerCase()}) not found at "${route.fname}" on controller "${routesInfo.controllerRoute.fname}"\n`);
                                     continue;
                                 }
 
                                 if (isEmpty(routerFileInstantiated[route.fname])) {
-                                    log.error(`@function not set at "${route.fname}" on controller "${routesInfo.controllerRoute.fname}". Did you declared private?\n`);
+                                    log.warn(`@function not set at "${route.fname}" on controller "${routesInfo.controllerRoute.fname}". Did you declared private?\n`);
                                     continue;
                                 }
 
@@ -87,6 +92,11 @@ function routerManager() {
         });
     }
 
+    /**
+     * Get information about detected annotations
+     * @param annotations
+     * @returns {{routes: *[]}}
+     */
     this.getRoutesAnnotationsInfo = (annotations) => {
         let routeInfo = {
             routes: []

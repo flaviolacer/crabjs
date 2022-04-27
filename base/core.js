@@ -11,6 +11,7 @@ function core() {
     this.expressInstance = express();
     let expressInstance = this.expressInstance;
     this.server = null;
+    let instance = this;
 
     /**
      * Start express server on predfined ports
@@ -78,7 +79,7 @@ function core() {
          * Event listener for HTTP server "listening" event.
          */
         function onListening() {
-            let addr = server.address();
+            let addr = instance.server.address();
             let bind = typeof addr === 'string'
                 ? 'pipe ' + addr
                 : addr.port;
@@ -86,10 +87,10 @@ function core() {
             let localAddresses = ['::','127.0.0.1'];
             host = (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
 
-            log.info('\x1b[33m%s\x1b[0m', '--------------------------------------------------');
-            log.info('\x1b[36m%s\x1b[0m', '   CrabJS started!');
-            log.info('\x1b[36m%s\x1b[0m', '   Server started at "'+host+':'+bind+'"');
-            log.info('\x1b[33m%s\x1b[0m', '--------------------------------------------------\n');
+            log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------');
+            log.force('\x1b[36m%s\x1b[0m', '   CrabJS started!');
+            log.force('\x1b[36m%s\x1b[0m', '   Server started at "'+host+':'+bind+'"');
+            log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------\n');
         }
     }
 
