@@ -5,8 +5,8 @@ const fs = require('fs');
 const log = require('./base/log');
 global.config = require("./defaults.json")
 let core = require("./base/core");
-let entityManager = require("./base/entity-manager");
 let routerManager = require("./base/router-manager");
+let entityManager = require("./base/entity-manager");
 
 exports.start = function(appDir) {
     // global config
@@ -24,8 +24,9 @@ exports.start = function(appDir) {
     log.info("Loading Libraries...");
     // initializing express server
     core.initExpress();
-    log.info("Loading Entities...");
-    entityManager.init(core);
     log.info("Loading Routes...");
     routerManager.init(core);
+    // load entityManager to memory
+    entityManager.init();
+    global.em = entityManager;
 }

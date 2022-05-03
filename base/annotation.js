@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-// annotarion parser
+// annotation parser
 function annotation() {
     let instance = this;
     this.parse = (file, callback) => {
@@ -9,7 +9,7 @@ function annotation() {
             });
 
             try {
-                fileContent = fs.readFileSync(file, {encoding: 'utf-8'});
+                let fileContent = fs.readFileSync(file, {encoding: 'utf-8'});
                 let annotations = instance.getAnnotations(fileContent);
                 callback(null, annotations);
                 resolve(annotations);
@@ -20,8 +20,17 @@ function annotation() {
         });
     }
 
+    this.parseSync = (file) => {
+            try {
+                let fileContent = fs.readFileSync(file, {encoding: 'utf-8'});
+                return instance.getAnnotations(fileContent);
+            } catch(e) {
+                return null;
+            }
+    }
+
     this.getAnnotations = (fileContent) => {
-        let annotationMainRegex = /(\/\*\*(([\s\n\*@a-zA-Z0-9=;'",():]*)|([\s\n\*@a-zA-Z0-9=;'",():\/]*))\*\/)(([a-zA-Z0-9\.=\s])*)/gm;
+        let annotationMainRegex = /(\/\*\*(([\s\n*@a-zA-Z0-9=;'",():]*)|([\s\n*@a-zA-Z0-9=;'",():\/]*))\*\/)(([a-zA-Z0-9.=\s])*)/gm;
 
         let result = {
             functions: [],
@@ -31,7 +40,7 @@ function annotation() {
         let blockKey;
         let matches = [...fileContent.matchAll(annotationMainRegex)];
 
-        if (matches === null) {
+        if (isEmpty(matches)) {
             return {};
         }
 
@@ -73,7 +82,7 @@ function annotation() {
                     value = value.substring(key.length);
 
                 // cleanup values
-                value = value.replaceAll(/([\(\)\'\" =]|\*\/)/, '');
+                value = value.replaceAll(/([()'" =]|\*\/)/, '');
 
                 if (matchType === 'functions') {
                     if (isEmpty(result.functions[blockKey]))
