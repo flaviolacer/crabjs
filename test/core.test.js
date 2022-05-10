@@ -1,5 +1,5 @@
 require("../base/helper")
-global.config = require("../defaults.json")
+global.configCJS = require("../defaults.json")
 const core = require('../base/core');
 const assert = require('assert');
 

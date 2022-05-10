@@ -11,17 +11,17 @@ function routerManager() {
      * @param core
      */
     this.init = (core) => {
-        if (isEmpty(config.server_controllers_path) || config.server_controllers_path.startsWith('.') || !config.server_controllers_path.startsWith('/'))
-            config.server_controllers_path = path.join(config.app_root, config.server_controllers_path);
+        if (isEmpty(configCJS.server_controllers_path) || configCJS.server_controllers_path.startsWith('.') || !configCJS.server_controllers_path.startsWith('/'))
+            configCJS.server_controllers_path = path.join(configCJS.app_root, configCJS.server_controllers_path);
 
-        fs.readdir(config.server_controllers_path,async function (err, files) {
+        fs.readdir(configCJS.server_controllers_path,async function (err, files) {
             //handling error
             if (err) {
                 log.error('Unable to list files on directory: ' + err);
             } else {
                 await files.forEach(async file => {
                     // parse annotation files
-                    await annotation.parse(path.join(config.server_controllers_path, file), (err, annotations) => {
+                    await annotation.parse(path.join(configCJS.server_controllers_path, file), (err, annotations) => {
                         if (err) {
                             log.error(err)
                             return;
@@ -40,7 +40,7 @@ function routerManager() {
                             let newRoute = core.express.Router();
 
                             // get controller instantiated
-                            let routerFileInstantiated = require(path.join(config.server_controllers_path, file));
+                            let routerFileInstantiated = require(path.join(configCJS.server_controllers_path, file));
                             if (routerFileInstantiated.constructor.name.toLowerCase() === "function") routerFileInstantiated = new routerFileInstantiated();
 
                             if (isEmpty(routerFileInstantiated)) {

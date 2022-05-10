@@ -17,11 +17,11 @@ function core() {
      * Start express server on predfined ports
      */
     this.startServer = () => {
-        let port = normalizePort(config.server_port || process.env.SERVER_PORT || '3000');
+        let port = normalizePort(configCJS.server_port || process.env.SERVER_PORT || '3000');
         expressInstance.set('port', port);
         this.server = http.createServer(expressInstance);
         // set default timeout
-        this.server.setTimeout(config.server_timeout);
+        this.server.setTimeout(configCJS.server_timeout);
         /**
          * Listen on provided port, on all network interfaces.
          */

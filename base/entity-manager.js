@@ -10,8 +10,8 @@ function entityManager() {
      * Initialize entity manager
      */
     this.init = () => {
-        if (isEmpty(config.server_entities_path) || config.server_entities_path.startsWith('.') || !config.server_entities_path.startsWith('/'))
-            config.server_entities_path = path.join(config.app_root, config.server_entities_path);
+        if (isEmpty(configCJS.server_entities_path) || configCJS.server_entities_path.startsWith('.') || !configCJS.server_entities_path.startsWith('/'))
+            configCJS.server_entities_path = path.join(configCJS.app_root, configCJS.server_entities_path);
     }
 
     // initialize entityDefinitions
@@ -28,7 +28,7 @@ function entityManager() {
             return;
         }
         let entityFilename = name.contains("\\.") ? name : name + '.js';
-        let entityFilepath = path.join(config.server_entities_path, entityFilename);
+        let entityFilepath = path.join(configCJS.server_entities_path, entityFilename);
         if (!fs.existsSync(entityFilepath)) {
             log.error(`Entity definition not found. Missing create it (${name})?`);
             return;

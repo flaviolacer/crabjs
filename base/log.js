@@ -5,15 +5,15 @@ const debug_level = {
 }
 function log() {
     this.info = (...args) => {
-        if (debug_level[config.debug.level] <= 1)
+        if (debug_level[configCJS.debug.level] <= 1)
             console.log(...args);
     }
     this.warn = (...args) => {
-        if (debug_level[config.debug.level] <= 2)
+        if (debug_level[configCJS.debug.level] <= 2)
             console.log("\x1b[33m%s\x1b[0m", ...args);
     }
     this.error = (...args) => {
-        if (debug_level[config.debug.level] <= 3)
+        if (debug_level[configCJS.debug.level] <= 3)
             console.log("\x1b[31m%s\x1b[0m", ...args);
     }
     this.force = (...args) => {
