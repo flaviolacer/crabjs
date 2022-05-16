@@ -1,26 +1,21 @@
 /// start CrabJS
 require("./base/helper")
-const path = require("path");
-const fs = require('fs');
 const log = require('./base/log');
-global.configCJS = require("./defaults.json")
+let cjs = require("./base/cjs");
+cjs.config = require("./defaults.json")
 let core = require("./base/core");
 let routerManager = require("./base/router-manager");
 let entityManager = require("./base/entity-manager");
 
 exports.start = function(appDir) {
-    this.em = null;
+    process.env.DEBUG = "i18n:debug";
+    cjs.entityManager = null;
     // global config
-    configCJS.app_root = appDir;
-
+    cjs.config.app_root = appDir;
     // check if custom config exists
-    let customConfigFilename = path.join(configCJS.app_root,configCJS.server_config_filename);
-    if (fs.existsSync(customConfigFilename)) {
-        let custom_config = require(customConfigFilename);
-        // merge config session
-        extend(configCJS, custom_config);
-    }
-
+    core.loadCustomConfig();
+    // load locales
+    cjs.i18n = core.loadLocales();
     log.info("Initializing CrabJS...");
     log.info("Loading Libraries...");
     // initializing express server
@@ -29,5 +24,7 @@ exports.start = function(appDir) {
     routerManager.init(core);
     // load entityManager to memory
     entityManager.init();
-    this.em = entityManager;
+    cjs.entityManager = entityManager;
+    // return cjs object to app
+    return cjs;
 }

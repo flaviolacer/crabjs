@@ -2,6 +2,9 @@ const path = require("path");
 const express = require('express');
 const http = require("http");
 const log = require("./log");
+const cjs = require("./cjs");
+const fs = require("fs");
+const { I18n } = require('i18n')
 
 function core() {
     /**
@@ -17,11 +20,11 @@ function core() {
      * Start express server on predfined ports
      */
     this.startServer = () => {
-        let port = normalizePort(configCJS.server_port || process.env.SERVER_PORT || '3000');
+        let port = normalizePort(cjs.config.server_port || process.env.SERVER_PORT || '3000');
         expressInstance.set('port', port);
         this.server = http.createServer(expressInstance);
         // set default timeout
-        this.server.setTimeout(configCJS.server_timeout);
+        this.server.setTimeout(cjs.config.server_timeout);
         /**
          * Listen on provided port, on all network interfaces.
          */
@@ -60,14 +63,14 @@ function core() {
                 : 'Port ' + port;
 
             // handle specific listen errors with friendly messages
-            log.error("CrabJS count not start!");
+            log.error(cjs.i18n.__("CrabJS count not start!"));
             switch (error.code) {
                 case 'EACCES':
-                    log.error(bind + ' requires elevated privileges');
+                    log.error(bind + cjs.i18n.__(' requires elevated privileges'));
                     process.exit(1);
                     break;
                 case 'EADDRINUSE':
-                    log.error(bind + ' is already in use');
+                    log.error(bind + cjs.i18n.__(' is already in use'));
                     process.exit(1);
                     break;
                 default:
@@ -88,8 +91,8 @@ function core() {
             host = (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
 
             log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------');
-            log.force('\x1b[36m%s\x1b[0m', '   CrabJS started!');
-            log.force('\x1b[36m%s\x1b[0m', '   Server started at "'+host+':'+bind+'"');
+            log.force('\x1b[36m%s\x1b[0m', '   '+cjs.i18n.__('CrabJS started!'));
+            log.force('\x1b[36m%s\x1b[0m', '   '+cjs.i18n.__('Server started at "')+host+':'+bind+'"');
             log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------\n');
         }
     }
@@ -115,6 +118,29 @@ function core() {
         // catch not found
         // start server
         this.startServer();
+    }
+
+    /**
+     * Load custom config
+     */
+    this.loadCustomConfig = () => {
+        let customConfigFilename = path.join(cjs.config.app_root,cjs.config.server_config_filename);
+        if (fs.existsSync(customConfigFilename)) {
+            let custom_config = require(customConfigFilename);
+            // merge config session
+            extend(cjs.config, custom_config);
+        }
+    }
+
+    /**
+     * Load locale info
+     */
+    this.loadLocales = () => {
+        return new I18n({
+            locales: [cjs.config.language],
+            directory: path.join(__dirname, "locales"),
+            updateFiles: true
+        });
     }
 }
 

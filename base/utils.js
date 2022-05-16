@@ -1,12 +1,9 @@
-const log = require('./log');
-
 function Util() {
-   this.checkLibExists = function(libname) {
+   this.checkLibExists = function(libName) {
        try {
-           require.resolve(libname);
+           require.resolve(libName);
            return true;
        } catch(e) {
-           log.error(libname+" is not found");
            return false;
        }
    }

@@ -1,10 +1,11 @@
-require("../base/helper")
-global.config = require("../defaults.json")
-config.app_root = __dirname;
-config.server_controllers_path = "data/controller";
-const routerManager = require('../base/router-manager');
+require("../../base/helper");
+let cjs = require('../../base/cjs');
+cjs.config = require("../../defaults.json")
+cjs.config.app_root = __dirname;
+const routerManager = require('../../base/router-manager');
 const assert = require('assert');
-const core = require("../base/core");
+const core = require("../../base/core");
+cjs.i18n = core.loadLocales();
 const axios = require('axios').default;
 const defaultUrl = "http://127.0.0.1:3000"; // default loopback
 const defaultController = '/product';
@@ -15,7 +16,7 @@ describe('Testing routing functions', function () {
     it('Test if core was initialized and loading routes', () => {
         try {
             // set controller directory
-            config.server_controllers_path = "data/controller";
+            cjs.config.server_controllers_path = "../data/controller";
             // initialize server
             core.initExpress();
             // initialize router manager

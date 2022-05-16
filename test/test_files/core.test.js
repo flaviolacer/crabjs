@@ -1,6 +1,7 @@
-require("../base/helper")
-global.configCJS = require("../defaults.json")
-const core = require('../base/core');
+require("../../base/helper");
+let cjs = require('../../base/cjs');
+cjs.config = require("../../defaults.json");
+const core = require('../../base/core');
 const assert = require('assert');
 
 describe('Testing core functions', () => {

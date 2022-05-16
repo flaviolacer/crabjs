@@ -11,12 +11,12 @@ String.prototype.replaceAll = function (search, replacement) {
 String.prototype.indexOfRegex = function(regex){
     let match = this.match(regex);
     return match ? this.indexOf(match[0]) : -1;
-}
+};
 
 String.prototype.lastIndexOfRegex = function(regex){
     let match = this.match(regex);
     return match ? this.lastIndexOf(match[match.length-1]) : -1;
-}
+};
 
 Array.prototype.contains = function (k) {
     for (let p in this)
@@ -25,15 +25,25 @@ Array.prototype.contains = function (k) {
     return false;
 };
 
+global.containsObjectKey = function (obj, k, key) {
+    for (let p in obj) {
+        let comp_value = obj[p][key];
+        if (isEmpty(comp_value)) continue;
+        if (comp_value === k)
+            return p;
+    }
+    return false;
+};
+
 //global functions
 global.isEmpty = function (obj) {
-    return ((typeof obj === 'undefined' || obj === null || obj === '') || (isArray(obj) && (obj.length === 0)) || (isObject(obj) && (!(obj instanceof Date) && Object.keys(obj).length === 0)));
+    return ((typeof obj === 'undefined' || obj === null || obj === '') || (isArray(obj) && (obj.length === 0)) || (isObject(obj) && (Object.keys(obj).length === 0 && obj.constructor === Object)));
 };
 
 global.sendJson = (res, content, status) => {
     res.status(status);
     res.json(content);
-}
+};
 
 global.isArray = function(a) {
     return (!!a) && (a.constructor === Array);
@@ -41,7 +51,7 @@ global.isArray = function(a) {
 
 global.isString = function(s) {
     return typeof s === "string";
-}
+};
 
 global.isObject = function(obj) {
     return typeof obj === 'object' && !(obj instanceof Array)
@@ -70,3 +80,7 @@ global.snakeToCamelCase = str =>
             .replace('-', '')
             .replace('_', '')
     );
+
+global.lowerFirstLetter = string => {
+    return string.charAt(0).toLowerCase() + string.slice(1);
+}
