@@ -23,5 +23,6 @@
 	"Access denied. Secret key not set.": "Access denied. Secret key not set.",
 	"Access denied": "Access denied",
 	"Access denied. Invalid credentials.": "Access denied. Invalid credentials.",
-	"Access denied. Invalid token.": "Access denied. Invalid token."
+	"Access denied. Invalid token.": "Access denied. Invalid token.",
+	"You must set the secretKey in config file.": "You must set the secretKey in config file."
 }

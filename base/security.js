@@ -1,6 +1,5 @@
 const cjs = require("./cjs");
 const log = require('./log');
-const url = require("url");
 const Error = require("./error");
 const localStorage = require('./localstorage');
 const jwt = require('jsonwebtoken');
@@ -88,7 +87,8 @@ function security(req, res, next) {
 
         // get route and check if is eligible
         // secBypassRoutes
-        let urlInfo = url.parse(req.url);
+        const baseURL =  req.protocol + '://' + req.headers.host + '/';
+        let urlInfo = new URL(req.url, baseURL);
         cjs.secBypassRoutes = cjs.secBypassRoutes || []; // memory allocation for url security bypass
         if (urlInfo.pathname === securityConfig.jwt.tokenRoute) { // request token
             let apiUserAuth = {};
@@ -167,7 +167,8 @@ function security(req, res, next) {
                     });
             }
         }
-    }
+    } else
+        next();
 }
 
 module.exports = security;

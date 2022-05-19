@@ -2,6 +2,7 @@ require("../../base/helper");
 let cjs = require('../../base/cjs');
 cjs.config = require("../../defaults.json")
 cjs.config.app_root = __dirname;
+cjs.config.security = null; // disabling security
 const routerManager = require('../../base/router-manager');
 const assert = require('assert');
 const core = require("../../base/core");
