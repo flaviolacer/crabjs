@@ -7,8 +7,21 @@
   "debug" : {
     "level" : "error"
   },
-  "plugins": {
-    "jwt": true
+  "security": {
+    "jwt": {
+      "tokenRoute": "/token",
+      "tokenField": "access_token",
+      "signClientIdField" : "client_id",
+      "signClientSecretField" : "client_secret",
+      "tokenBearer": true,
+      "tokenExpires" : 300
+    }
   },
-  "language": "en"
+  "language": "en",
+  "localStorage" : {
+      "type" : "file",
+      "filename" : "",
+      "path" : "localstorage"
+  },
+  "cacheStoragePath" : "cache"
 }

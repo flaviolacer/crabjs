@@ -33,7 +33,7 @@ function mongoDB() {
                 try {
                     return new MongoDB.ObjectId(value);
                 } catch (e) {
-                    log.error(cjs.i18n.__(`Error on converting ObjectId Field: '${value}'`))
+                    log.error(cjs.i18n.__("Error on converting ObjectId Field: '{{value}}'", value));
                     throw new Error(e);
                 }
             case "datetime":
@@ -97,43 +97,55 @@ function mongoDB() {
         });
     };
 
-    this.find = (conditions, options) => {
+    this.find = async (options) => {
+        let filter = options.filter || {};
         options = options || {};
-
-        if (!this.db) throw new Error("You must set db before use.");
+        let db = await this.getDb();
+        if (!db) {
+            log.error(cjs.i18n.__("Cannot get \"{{entityName}}\" entities", {entityName: options.entity}));
+            resolve(false);
+            return;
+        }
 
         return new Promise(async (resolve, reject) => {
-            // transform id fields in objects
-            this.convertIdFields(conditions);
-            let pipeline = conditions.$pipeline || [];
-            delete conditions.$pipeline;
+            // convert fields to types
+            convertFieldsToTypeDefinitions(filter, options.definitions);
+
+            let pipeline = filter.$pipeline || [];
+            delete filter.$pipeline;
 
             // check if $match already exists
             const found = pipeline.some(fi => !isEmpty(fi.$match));
-            if (!found) pipeline.push({$match: conditions});
+            if (!found) pipeline.push({$match: filter});
 
+            // pagination
+            if (options.page_number && options.page_size) {
+                pipeline.push({$skip: (options.page_number - 1) * options.page_size});
+                pipeline.push({$limit: options.page_size});
+            }
+
+            let collectionName = options.definitions.entity.data.RepositoryName || options.entity;
             let res_cursor;
             try {
-                res_cursor = await instance.db.collection(instance.collectionName).aggregate(pipeline, {allowDiskUse: true});
+                res_cursor = await instance.db.collection(collectionName).aggregate(pipeline, {allowDiskUse: true});
             } catch (e) {
                 reject(e);
-                throw e;
+                return;
             }
 
             res_cursor.toArray(async function (errTo, results) {
                 if (errTo) {
                     reject(errTo);
-                    throw errTo;
+                    return;
                 }
 
-                if (instance.debug) {
-                    log.info('info-aggregate-params:' + JSON.stringify(conditions));
-                    log.info("info-aggregate-" + instance.collectionName, results[0]);
-                }
+                log.info('info-aggregate-params:' + JSON.stringify(pipeline));
+                //log.info("info-aggregate-" + collectionName, results);
+
                 if (!isEmpty(results)) {
                     if (options.one) resolve(results[0]); else resolve(results);
                 } else {
-                    resolve(null);
+                    resolve([]);
                 }
             });
         });
@@ -202,7 +214,7 @@ function mongoDB() {
 
                 try {
                     if (!isEmpty(entity[fieldRef])) entityPersist[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
-                } catch(e) {
+                } catch (e) {
                     log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field.", {entityName: entity.entityName}));
                     resolve(false);
                     return;
@@ -263,6 +275,57 @@ function mongoDB() {
                     }).then(() => {
                         resolve(entity);
                     });
+            }
+        });
+    };
+
+    this.remove = (options) => {
+        let entity = options.entity;
+        // conditions on remove
+        let filter = options.filter || {};
+        let definitions = options.definitions || entity.__definitions || {};
+        return new Promise(async (resolve, reject) => {
+            let db = await this.getDb();
+            if (!db) {
+                log.error(cjs.i18n.__("Cannot remove entity {{entityName}}", {entityName: entity.entityName}));
+                resolve(false);
+                return;
+            }
+            if (isEmpty(filter)) { // check if there is primaryKey(s) set
+                let Pks = definitions.primaryKeys;
+                for (let i = 0, j = Pks.length; i < j; i++) {
+                    let fieldRef = Pks[i].fname;
+                    let fieldName = (isEmpty(Pks[i].data.field)) ? Pks[i].fname : Pks[i].data.field;
+                    primaryKeyExists = true;
+                    if (!isEmpty(entity[fieldRef]) || MongoDB.ObjectId.isValid(entity[fieldRef])) filter[fieldName] = entity[fieldRef];
+                }
+            }
+
+            let collectionName = definitions.entity.data.RepositoryName || entity.entityName;
+            if (isEmpty(filter)) { // insert data
+                log.info(cjs.i18n.__("Not removing entities {{entityName}}. No filter set.", {entityName: entity.entityName}));
+                resolve(false);
+            } else {
+                // convert field names
+                convertFieldsToTypeDefinitions(filter, definitions);
+
+                // remove data and return the modified
+                await db.collection(collectionName).deleteMany(filter, {
+                    writeConcern: {
+                        w: 1,
+                        j: true
+                    }
+                }).catch((e) => {
+                    if (e.code === 66) {
+                        log.error(cjs.i18n.__("Error trying to delete records on repository. Records exists?"));
+                        reject(e);
+                        return;
+                    } else
+                        log.error(e);
+                    resolve(false);
+                }).then(() => {
+                    resolve(true);
+                });
             }
         });
     };

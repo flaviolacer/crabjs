@@ -72,6 +72,20 @@ global.extend = function (target) {
     return target;
 };
 
+global.extendRecursive = function (target) {
+    if (target == null) return;
+    let sources = [].slice.call(arguments, 1);
+    sources.forEach(function (source) {
+        for (let prop in source) {
+            if (isObject(target[prop]))
+                extendRecursive(target[prop], source[prop]);
+            else
+                target[prop] = source[prop];
+        }
+    });
+    return target;
+};
+
 global.camelToSnakeCase = str => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 global.snakeToCamelCase = str =>
     str.toLowerCase().replace(/([-_][a-z])/g, group =>

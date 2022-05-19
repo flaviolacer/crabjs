@@ -117,6 +117,8 @@ function core() {
         //expressInstance.use(logger('Response time\: :response-time\\n'));
         // catch not found
         // start server
+        // set security
+        expressInstance.use(require("./security"));
         this.startServer();
     }
 
@@ -126,9 +128,15 @@ function core() {
     this.loadCustomConfig = () => {
         let customConfigFilename = path.join(cjs.config.app_root,cjs.config.server_config_filename);
         if (fs.existsSync(customConfigFilename)) {
-            let custom_config = require(customConfigFilename);
+            let custom_config;
+            try {
+                custom_config = require(customConfigFilename);
+            } catch(e) {
+                log.error(cjs.i18n.__("Error on loading config file {{configFilename}}. Check the file format.", {configFilename: cjs.config.server_config_filename}));
+                return;
+            }
             // merge config session
-            extend(cjs.config, custom_config);
+            extendRecursive(cjs.config, custom_config);
         }
     }
 
@@ -138,7 +146,7 @@ function core() {
     this.loadLocales = () => {
         return new I18n({
             locales: [cjs.config.language],
-            directory: path.join(__dirname, "locales"),
+            directory: path.join(__dirname, "../locales"),
             updateFiles: true
         });
     }

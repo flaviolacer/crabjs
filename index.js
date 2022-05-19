@@ -12,10 +12,10 @@ exports.start = function(appDir) {
     cjs.entityManager = null;
     // global config
     cjs.config.app_root = appDir;
-    // check if custom config exists
-    core.loadCustomConfig();
     // load locales
     cjs.i18n = core.loadLocales();
+    // check if custom config exists
+    core.loadCustomConfig();
     log.info("Initializing CrabJS...");
     log.info("Loading Libraries...");
     // initializing express server

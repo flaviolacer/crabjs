@@ -35,30 +35,57 @@ class RepositoryManager {
     }
 
     async save(options) {
-        let conn = this.getConnection(options.entity.repository);
-        if (isEmpty(conn))
-            log.error(cjs.i18n.__("Cannot save entity \"{{entityName}}\", connection not found.", {entityName: options.entity.entityName}));
-        else
-            await conn.save(options);
+        options.__errorMessage = "Cannot save entity \"{{entityName}}\", connection not found.";
+        options.__command = "save";
+        return this.sendCommand(options);
     }
 
-    async insertBatch(options) {
+    async remove(options) {
+        options.__errorMessage = "Cannot remove entity \"{{entityName}}\", connection not found.";
+        options.__command = "remove";
+        return this.sendCommand(options);
+    }
+
+    insertBatch(options) {
+        options.__errorMessage = "Cannot save batch using repository \"{{repository}}\"";
+        options.__command = "insertBatch";
+        return this.sendCommand(options);
+    }
+
+    async sendCommand(options) {
+        let repository = options.repository || options.entity.repository;
         let conn = this.getConnection(options.repository);
+
         if (isEmpty(conn))
-            log.error(cjs.i18n.__("Cannot save batch using repository \"{{options.repository}}\"", {repository: options.repository}));
+            log.error(cjs.i18n.__(options.__errorMessage, {
+                repository: repository,
+                entityName: (options.entity) ? options.entity.entityName : null
+            }));
         else
-            await conn.insertBatch(options);
+            await conn[options.__command](options);
     }
 
     async findOne(options) {
         let conn = this.getConnection(options.repository);
         if (isEmpty(conn))
-            log.error(cjs.i18n.__("Cannot save batch using repository \"{{options.repository}}\"", {repository: options.repository}));
+            log.error(cjs.i18n.__("Cannot find one data using repository \"{{options.repository}}\"", {repository: options.repository}));
         else
             return await conn.findOne(options).catch(function () {
                 return false;
             }).then(function (obj) {
                 return obj;
+            });
+    }
+
+    async find(options) {
+        let conn = this.getConnection(options.repository);
+        if (isEmpty(conn))
+            log.error(cjs.i18n.__("Cannot load data from repository \"{{options.repository}}\"", {repository: options.repository}));
+        else
+            return await conn.find(options).catch(function () {
+                return false;
+            }).then(function (data) {
+                return data;
             });
     }
 }

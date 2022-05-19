@@ -38,7 +38,7 @@ function entityManager() {
             }
         } else
             return cjs.entityManager.__entityDefinitions[name];
-    }
+    };
 
     /**
      * Initialize entity manager
@@ -46,7 +46,7 @@ function entityManager() {
     this.init = () => {
         if (isEmpty(config.server_entities_path) || config.server_entities_path.startsWith('.') || !config.server_entities_path.startsWith('/'))
             cjs.config.server_entities_path = path.join(config.app_root, config.server_entities_path);
-    }
+    };
 
     let createEntity = name => {
         if (isEmpty(name)) {
@@ -82,7 +82,7 @@ function entityManager() {
         delete newEntityInstantiated.entity;
 
         return newEntityInstantiated;
-    }
+    };
 
     /**
      * Create entity to manipulate repository data
@@ -181,7 +181,7 @@ function entityManager() {
             });
             resolve();
         });
-    }
+    };
 
     /**
      * Retrieve entity from repository
@@ -228,6 +228,110 @@ function entityManager() {
                 log.error(e);
                 reject(e);
             }
+        });
+    };
+
+    /**
+     * Retrieve entities from
+     * @param entity
+     * @param filter
+     * @param options
+     * @returns {Promise<unknown>}
+     */
+    this.getEntities = (entity, filter, options) => {
+        options = options || {};
+        return new Promise(async (resolve, reject) => {
+            if (isEmpty(entity)) {
+                log.error(cjs.i18n.__("Need to specify the entity to load data."));
+                log.trace("error");
+                resolve(null);
+                return;
+            }
+
+            if (isEmpty(filter)) {
+                log.error(cjs.i18n.__("Need to specify the filter to return the entity."));
+                log.trace("error");
+                resolve(null);
+                return;
+            }
+            log.info(cjs.i18n.__("Retrieving entities from repository..."));
+            let entityDefinitions = getEntityDefinition(entity);
+
+            try {
+                let entities = await repositoryManager.find({
+                    repository: entityDefinitions.entity.repository,
+                    entity: entityDefinitions.entity.data.RepositoryName || entity,
+                    definitions: entityDefinitions,
+                    filter: filter
+                });
+
+                if (entities) {
+                    log.info("Data retrieved");
+                    if (options.rawData)
+                        resolve(entities)
+                    else {
+                        let returnData = [];
+                        for(let i = 0,j = entities.length;i<j;i++) { // converting data
+                            returnData.push(this.newEntity(entity, entities[i]));
+                        }
+                        resolve(returnData);
+                    }
+                } else {
+                    log.info("Entities not found");
+                    resolve(null);
+                }
+            } catch(e) {
+                log.error(cjs.i18n.__("Could not retrieve data from repository."));
+                log.error(e);
+                reject(e);
+            }
+        });
+    };
+
+    /**
+     * Remove entities from repository
+     * @param entity
+     * @param filter
+     * @returns {Promise<unknown>}
+     */
+    this.removeEntities = (entity, filter) => {
+        return new Promise(async (resolve, reject) => {
+            if (isEmpty(entity)) {
+                log.error(cjs.i18n.__("Need to specify the entity to load data."));
+                log.trace("error");
+                resolve(null);
+                return;
+            }
+
+            if (isEmpty(filter)) {
+                log.error(cjs.i18n.__("Need to specify the filter to return the entity."));
+                log.trace("error");
+                resolve(null);
+                return;
+            }
+            log.info(cjs.i18n.__("Removing entities..."));
+            let entityDefinitions = getEntityDefinition(entity);
+            try {
+                let response = await repositoryManager.remove({
+                    repository: entityDefinitions.entity.repository,
+                    entity: entityDefinitions.entity.data.RepositoryName || entity,
+                    definitions: entityDefinitions,
+                    filter: filter
+                });
+
+                if (response) {
+                    log.info("Data removed", entityData);
+                    resolve(this.newEntity(entity, entityData));
+                } else {
+                    log.info("Entities not remove");
+                    resolve(null);
+                }
+            } catch (e) {
+                log.error(cjs.i18n.__("Could not erase data from repository."));
+                log.error(e);
+                reject(e);
+            }
+
         });
     }
 }
