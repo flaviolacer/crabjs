@@ -16,7 +16,6 @@
 	"Cannot save entity {{entityName}}. Error set value on field.": "Cannot save entity {{entityName}}. Error set value on field.",
 	"Error trying to save record on repository. Record id already exists?": "Error trying to save record on repository. Record id already exists?",
 	"Removing entity \"{{entityName}}\"...": "Removing entity \"{{entityName}}\"...",
-	"Removing entities": "Removing entities",
 	"Removing entities...": "Removing entities...",
 	"Retrieving entities from repository...": "Retrieving entities from repository...",
 	"Error on loading config file {{configFilename}}. Check the file format.": "Error on loading config file {{configFilename}}. Check the file format.",

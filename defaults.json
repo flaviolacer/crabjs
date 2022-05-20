@@ -9,12 +9,19 @@
   },
   "security": {
     "jwt": {
-      "tokenRoute": "/token",
+      "tokenSignInRoute": "/auth/signin",
       "tokenField": "access_token",
       "signClientIdField" : "client_id",
       "signClientSecretField" : "client_secret",
       "tokenBearer": true,
-      "tokenExpires" : 300
+      "tokenExpires" : 300,
+      "tokenReplaceNew" : true,
+      "resetUserTokensWhenLogin": true,
+      "refreshToken" : {
+        "tokenExpires" : 18000,
+        "tokenSecret" : null,
+        "tokenReplaceNew" : true
+      }
     }
   },
   "language": "en",
