@@ -4,14 +4,16 @@ const Error = require("./error");
 const localStorage = require('./localstorage');
 const jwt = require('jsonwebtoken');
 const securityConfig = cjs.config.security;
-let tokenExpires, secretKey, refreshTokenSecretKey, refreshTokenExpires;
+let tokenExpires, encryptionKey, refreshTokenEncryptionSecretKey, refreshTokenExpires;
 
 if (securityConfig) {
 // config values
-    tokenExpires = securityConfig.jwt.tokenExpires || 300; // 5 min default
-    secretKey = securityConfig.secretKey || securityConfig.jwt.secretKey;
-    refreshTokenSecretKey = securityConfig.jwt.refreshToken.tokenSecret || secretKey; // 5 min default
-    refreshTokenExpires = securityConfig.jwt.refreshToken.tokenExpires || tokenExpires || 300; // 5 min default
+    tokenExpires = securityConfig.jwt.token_expires || 300; // 5 min default
+    encryptionKey = securityConfig.encryption_key || securityConfig.jwt.encryption_key;
+    refreshTokenEncryptionSecretKey = securityConfig.jwt.refresh_token.token_secret || encryptionKey; // 5 min default
+    refreshTokenExpires = securityConfig.jwt.refresh_token.token_expires || tokenExpires || 300; // 5 min default
+    cjs.configSecureCredentials = cjs.configSecureCredentials || {};
+    securityConfig.jwt.refresh_token = securityConfig.jwt.refresh_token || {};
 }
 
 /**
@@ -37,7 +39,7 @@ let addTokenRevokedList = (tokens) => {
 let saveUserToken = (clientId, token, refreshToken) => {
     let tokenList = localStorage.getItem("tokenList") || {};
     tokenList[clientId] = tokenList[clientId] || {};
-    let tokensInfo = (securityConfig.jwt.tokenReplaceNew || isEmpty(tokenList[clientId].tokens)) ? {} : tokenList[clientId].tokens;
+    let tokensInfo = (securityConfig.jwt.token_replace_new || isEmpty(tokenList[clientId].tokens)) ? {} : tokenList[clientId].tokens;
     tokensInfo[token] = {
         "date": new Date(),
         "expires": tokenExpires
@@ -45,7 +47,7 @@ let saveUserToken = (clientId, token, refreshToken) => {
     tokenList[clientId].tokens = tokensInfo;
 
     if (refreshToken) {
-        let refreshTokensInfo = (securityConfig.jwt.refreshToken.tokenReplaceNew || isEmpty(tokenList[clientId].refreshTokens)) ? {} : tokenList[clientId].refreshTokens;
+        let refreshTokensInfo = (securityConfig.jwt.refresh_token.token_replace_new || isEmpty(tokenList[clientId].refreshTokens)) ? {} : tokenList[clientId].refreshTokens;
         refreshTokensInfo[refreshToken] = {
             "date": new Date(),
             "expires": refreshTokenExpires
@@ -60,13 +62,14 @@ let saveUserToken = (clientId, token, refreshToken) => {
  * @param clientId
  * @returns {null}
  */
-let removeUserToken = (clientId) => {
+let removeUserToken = (clientId, ignoreRefreshToken) => {
     let tokenList = localStorage.getItem("tokenList");
     if (tokenList && !isEmpty(tokenList[clientId])) {
         // add on revoked tokens
         addTokenRevokedList(tokenList[clientId].tokens);
         // add on revoked refresh Tokens
-        addTokenRevokedList(tokenList[clientId].refreshTokens);
+        if (!ignoreRefreshToken)
+            addTokenRevokedList(tokenList[clientId].refreshTokens);
         //erase record
         delete tokenList[clientId];
         // save to storage (last generated)
@@ -82,15 +85,20 @@ let removeUserToken = (clientId) => {
  * @returns {*|null}
  */
 let generateToken = (payload, forcedSecretKey, forcedTokenExpires) => {
-    forcedSecretKey = forcedSecretKey || secretKey;
+    forcedSecretKey = forcedSecretKey || encryptionKey;
     forcedTokenExpires = forcedTokenExpires || tokenExpires;
+
+    // remove payload default previous info
+    delete payload.iat;
+    delete payload.exp;
+
     try {
         return jwt.sign(payload, forcedSecretKey, {
             expiresIn: forcedTokenExpires
         });
-    } catch {
+    } catch (e) {
         let err = new Error(cjs.i18n.__('Access denied. Error on generating token.'), 403);
-        sendJson(res, err, 403);
+        log.error(e);
         return null;
     }
 }
@@ -102,7 +110,7 @@ let generateToken = (payload, forcedSecretKey, forcedTokenExpires) => {
  * @returns {*|boolean}
  */
 let verifyToken = (token, forcedSecretKey) => {
-    forcedSecretKey = forcedSecretKey || secretKey;
+    forcedSecretKey = forcedSecretKey || encryptionKey;
     try {
         return jwt.verify(token, forcedSecretKey);
     } catch {
@@ -163,7 +171,7 @@ function security(req, res, next) {
         let headers = req.headers || {};
         let securityConfig = cjs.config.security;
 
-        if (isEmpty(securityConfig.secretKey || securityConfig.jwt.secretKey)) {
+        if (isEmpty(securityConfig.encryption_key || securityConfig.jwt.encryption_key)) {
             let err = new Error(cjs.i18n.__('Access denied. Secret key not set.'), 403);
             log.error(cjs.i18n.__("You must set the secretKey in config file."));
             sendJson(res, err, 403);
@@ -175,27 +183,48 @@ function security(req, res, next) {
         const baseURL = req.protocol + '://' + req.headers.host + '/';
         let urlInfo = new URL(req.url, baseURL);
         cjs.secBypassRoutes = cjs.secBypassRoutes || []; // memory allocation for url security bypass
-        if (urlInfo.pathname === securityConfig.jwt.tokenSignInRoute) { // request token
+        if (urlInfo.pathname === securityConfig.jwt.token_signin_route) { // request token
             let apiUserAuth = {};
             // check if there is clientId and clientSecret on config and matches with sent
-            let testClientId = query[securityConfig.jwt.signClientIdField] || body[securityConfig.jwt.signClientIdField] || headers[securityConfig.jwt.signClientIdField];
-            let testClientSecret = query[securityConfig.jwt.signClientIdField] || body[securityConfig.jwt.signClientIdField] || headers[securityConfig.jwt.signClientIdField];
-            // validate using user set on config
-            if ((!isEmpty(securityConfig[securityConfig.jwt.signClientIdField]) && !isEmpty(securityConfig[securityConfig.jwt.signClientSecretField])) && securityConfig[securityConfig.jwt.signClientIdField] === testClientId && securityConfig[securityConfig.jwt.signClientSecretField] === testClientSecret) {
-                apiUserAuth.clientId = testClientId;
-                apiUserAuth.clientSecret = testClientSecret;
+            let testClientId = query[securityConfig.jwt.sign_clientid_field] || body[securityConfig.jwt.sign_clientid_field] || headers[securityConfig.jwt.sign_clientid_field];
+            let testClientSecret = query[securityConfig.jwt.sign_clientid_field] || body[securityConfig.jwt.sign_clientid_field] || headers[securityConfig.jwt.sign_clientid_field];
+
+            if (isEmpty(securityConfig.auth_entity)) { // config auth
+                if (isEmpty(cjs.configSecureCredentials)) {
+                    let configCredentials = securityConfig.credentials || [];
+
+                    // validate using user set on config
+                    if ((!isEmpty(securityConfig[securityConfig.jwt.sign_clientid_field]) && !isEmpty(securityConfig[securityConfig.jwt.sign_client_secret_field]))) {
+                        let configUserCredentials = {};
+                        configUserCredentials[securityConfig.jwt.sign_clientid_field] = securityConfig[securityConfig.jwt.sign_clientid_field];
+                        configUserCredentials[securityConfig.jwt.sign_client_secret_field] = securityConfig[securityConfig.jwt.sign_client_secret_field];
+                        configCredentials.push(configUserCredentials);
+                    }
+
+                    // populate config credentials in memory
+                    cjs.configSecureCredentials = {};
+                    for (let i = 0, j = configCredentials.length; i < j; i++)
+                        cjs.configSecureCredentials[configCredentials[i][securityConfig.jwt.sign_clientid_field]] = configCredentials[i][securityConfig.jwt.sign_client_secret_field];
+                }
+
+                // check if credentials exists
+                if (cjs.configSecureCredentials[testClientId] === testClientSecret) {
+                    apiUserAuth.clientId = testClientId;
+                    apiUserAuth.clientSecret = testClientSecret;
+                }
+            } else {
+                //TODO: Implement repository
             }
-            //TODO: Implement repository
 
             // do the authentication
             if (!isEmpty(apiUserAuth)) {
                 let response = {token: generateToken(apiUserAuth)};
                 // remove old token
-                if (securityConfig.jwt.resetUserTokensWhenLogin)
+                if (securityConfig.jwt.remove_tokens_auth)
                     removeUserToken(apiUserAuth.clientId);
                 // generate refreshToken
-                if (securityConfig.jwt.refreshToken)
-                    response.refreshToken = generateToken(apiUserAuth, refreshTokenSecretKey, refreshTokenExpires);
+                if (securityConfig.jwt.refresh_token)
+                    response.refreshToken = generateToken(apiUserAuth, refreshTokenEncryptionSecretKey, refreshTokenExpires);
                 // save new token
                 saveUserToken(apiUserAuth.clientId, response.token, response.refreshToken);
 
@@ -206,9 +235,36 @@ function security(req, res, next) {
                 let err = new Error(cjs.i18n.__('Access denied. Invalid credentials.'), 403);
                 sendJson(res, err, 403);
             }
+        } else if (urlInfo.pathname === securityConfig.jwt.refresh_token.refresh_token_route) { // refresh token - new token
+            if (isEmpty(req.refresh_token)) req.refresh_token = (!isEmpty(securityConfig.jwt.refresh_token.refresh_token_field)) ? query[securityConfig.jwt.refresh_token.refresh_token_field] || body[securityConfig.jwt.refresh_token.refresh_token_field] : null;
+            //check if token is revoked
+            let tokensRevoked = localStorage.getItem("tokenListRevoked") || {};
+            let authData = verifyToken(req.refresh_token, refreshTokenEncryptionSecretKey);
+            if (isEmpty(tokensRevoked[req.refresh_token]) && authData) {
+                // generate new token
+                let response = {token: generateToken(authData)};
+                if (securityConfig.jwt.refresh_token.reset_refresh_token) {
+                    response.refreshToken = generateToken(authData, refreshTokenEncryptionSecretKey, refreshTokenExpires);
+                    req.refresh_token = response.refreshToken;
+                }
+
+                // remove old token
+                if (securityConfig.jwt.remove_tokens_auth) {
+                    removeUserToken(authData.clientId, !securityConfig.jwt.refresh_token.reset_refresh_token);
+                }
+
+                // save new token
+                saveUserToken(authData.clientId, response.token, req.refresh_token);
+                sendJson(res, response, 200);
+            } else {
+                let err = new Error(cjs.i18n.__("Access denied. Invalid refresh token."), 403);
+                sendJson(res, err, 403);
+            }
+            // remove expired tokens
+            removeExpiredTokens();
         } else if (cjs.secBypassRoutes.contains(urlInfo.pathname)) next(); else { // not bypassed
             //Check if bearer exists
-            if (securityConfig.jwt.tokenBearer) {
+            if (securityConfig.jwt.token_bearer) {
                 const bearerHeader = headers['authorization'];
                 if (bearerHeader) {
                     const bearer = bearerHeader.split(' ');
@@ -220,7 +276,7 @@ function security(req, res, next) {
             }
 
             // check if token was sent using token field
-            if (isEmpty(req.token)) req.token = (!isEmpty(securityConfig.jwt.tokenField)) ? query[securityConfig.jwt.tokenField] || body[securityConfig.jwt.tokenField] : null;
+            if (isEmpty(req.token)) req.token = (!isEmpty(securityConfig.jwt.token_field)) ? query[securityConfig.jwt.token_field] || body[securityConfig.jwt.token_field] : null;
 
             if (isEmpty(req.token)) {
                 let err = new Error(cjs.i18n.__('Access denied'), 403);

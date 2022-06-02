@@ -13,8 +13,8 @@ class LocalStorage {
         }, options);
 
         LocalStorage.dictionary = {};
-        this.filename = !isEmpty(cjs.config.localStorage.filename) ? cjs.config.localStorage.filename : "ls.json";
-        this.storagePath = path.join(cjs.config.app_root, cjs.config.cacheStoragePath, cjs.config.localStorage.path);
+        this.filename = !isEmpty(cjs.config.local_storage.filename) ? cjs.config.local_storage.filename : "ls.json";
+        this.storagePath = path.join(cjs.config.app_root, cjs.config.cache_storage_path, cjs.config.local_storage.path);
         this.filePath = path.join(this.storagePath, this.filename);
 
         this.loadData();

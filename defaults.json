@@ -9,26 +9,29 @@
   },
   "security": {
     "jwt": {
-      "tokenSignInRoute": "/auth/signin",
-      "tokenField": "access_token",
-      "signClientIdField" : "client_id",
-      "signClientSecretField" : "client_secret",
-      "tokenBearer": true,
-      "tokenExpires" : 300,
-      "tokenReplaceNew" : true,
-      "resetUserTokensWhenLogin": true,
-      "refreshToken" : {
-        "tokenExpires" : 18000,
-        "tokenSecret" : null,
-        "tokenReplaceNew" : true
+      "token_signin_route": "/auth/signin",
+      "token_field": "access_token",
+      "sign_clientid_field" : "client_id",
+      "sign_client_secret_field" : "client_secret",
+      "token_bearer": true,
+      "token_expires" : 300,
+      "token_replace_new" : true,
+      "remove_tokens_auth": true,
+      "refresh_token" : {
+        "token_expires" : 18000,
+        "encryption_key" : null,
+        "token_replace_new" : true,
+        "reset_refresh_token" : true,
+        "refresh_token_route" : "/auth/token",
+        "refresh_token_field": "refresh_token"
       }
     }
   },
   "language": "en",
-  "localStorage" : {
+  "local_storage" : {
       "type" : "file",
       "filename" : "",
       "path" : "localstorage"
   },
-  "cacheStoragePath" : "cache"
+  "cache_storage_path" : "cache"
 }
