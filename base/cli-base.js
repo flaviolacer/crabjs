@@ -34,6 +34,14 @@ function cliBase() {
             // import exec method from child_process module
             const {execSync} = require("child_process");
             let npm_bin = execSync("which npm").toString().replace(/\n/g, "");
+            // creating default dirs
+            let controllerDir = path.join(cjs.config.app_root, '/controller/');
+            if (!fs.existsSync(controllerDir))
+                fs.mkdirSync(controllerDir);
+            let entityDir = path.join(cjs.config.app_root, '/entity/');
+            if (!fs.existsSync(entityDir))
+                fs.mkdirSync(entityDir);
+
             // install dependencies
             log.warn('Installing dependencies...')
             let spawn = require('child_process').spawn;
