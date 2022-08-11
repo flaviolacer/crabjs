@@ -14,7 +14,7 @@ if (isEmpty(args)) {
     return;
 }
 
-if (args.contains('--h') || args.contains('--help')) {
+if (args.contains('-h')  || args.contains('--help')) {
     cliBase.showHelp();
 } else {
     cliBase.process(args);

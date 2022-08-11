@@ -1,0 +1,12 @@
+{
+  "debug": {
+    "level": "info"
+  },
+  "server_timeout": 20000,
+  "server_port": 3000,
+  "security": {
+    "encryption_key": "{{encryption_key}}",
+    "client_id": "{{client_id}}",
+    "client_secret": "{{client_secret}}"
+  }
+}

@@ -1,0 +1,12 @@
+Project initialized.
+
+Here your connection configurations:
+
+----------------------------------------------------------------------------
+client_id: {{client_id}}
+client_secret: {{client_secret}}
+----------------------------------------------------------------------------
+
+You can find this configuration on "crabjs.json" located on root of your project.
+
+Enjoy!

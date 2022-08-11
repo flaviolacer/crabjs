@@ -1,21 +1,65 @@
 const fs = require('fs');
 const path = require("path");
 const handlebars = require("handlebars");
+const cjs = require("./cjs");
+cjs.config = require("../defaults.json")
+// app libs
+const core = require("./core");
+// load default config
+cjs.config.app_root = process.cwd();
+// load locales
+cjs.i18n = core.loadLocales();
+core.loadCustomConfig();
 const log = require("../base/log");
 
 function cliBase() {
+    this.init = () => {
+        // copy app.js default
+        fs.copyFileSync(path.join(__dirname, "../templates/init/app.js"), path.join(cjs.config.app_root, 'app.js'));
+        // generate default config
+        const source = fs.readFileSync(path.join(__dirname, "../templates/init/crabjs.template"), {encoding: 'utf-8'});
+        const template = handlebars.compile(source);
+
+        let utils = require("./utils");
+        let generated_options = {
+            "encryption_key": utils.UID("48"),
+            "client_id": utils.UID("22"),
+            "client_secret": utils.UID("43")
+        };
+        const contents = template(generated_options);
+        try {
+            // white config to directory
+            fs.writeFileSync(path.join(cjs.config.app_root, 'crabjs.json'), contents);
+            // get installed npm
+            // import exec method from child_process module
+            const {execSync} = require("child_process");
+            let npm_bin = execSync("which npm").toString().replace(/\n/g, "");
+            // install dependencies
+            log.warn('Installing dependencies...')
+            let spawn = require('child_process').spawn;
+            let watcher = spawn(npm_bin, ["install", "-s", "crabjs", "--prefix", cjs.config.app_root]);
+            watcher.on('exit', function () {
+                const source_init = fs.readFileSync(path.join(__dirname, "../templates/init.template"), {encoding: 'utf-8'});
+                const template_init = handlebars.compile(source_init);
+                console.log(template_init(generated_options));
+            });
+        } catch (err) {
+            log.error(`Oops! cannot create file: ${err.message}.`);
+        }
+    }
+
     this.showHelp = function () {
         let helpContent = fs.readFileSync(path.join(__dirname, "../templates/help.template"), {encoding: 'utf-8'});
         console.log(helpContent);
     }
 
-    this.createController = function(controllerName) {
+    this.createController = function (controllerName) {
         const source = fs.readFileSync(path.join(__dirname, "../templates/controller.template"), {encoding: 'utf-8'});
         const template = handlebars.compile(source);
         const contents = template({name: controllerName});
 
-        let controllerPath = "./controller/";
-        if (!fs.existsSync(controllerPath)){
+        let controllerPath = path.join(cjs.config.app_root, "/controller/");
+        if (!fs.existsSync(controllerPath)) {
             fs.mkdirSync(controllerPath);
         }
 
@@ -27,13 +71,13 @@ function cliBase() {
         }
     };
 
-    this.createEntity = function(entityName) {
+    this.createEntity = function (entityName) {
         const source = fs.readFileSync(path.join(__dirname, "../templates/entity.template"), {encoding: 'utf-8'});
         const template = handlebars.compile(source);
         const contents = template({name: entityName});
 
-        let entityPath = "./entity/";
-        if (!fs.existsSync(entityPath)){
+        let entityPath = path.join(cjs.config.app_root, "/entity/");
+        if (!fs.existsSync(entityPath)) {
             fs.mkdirSync(entityPath);
         }
 
@@ -69,6 +113,13 @@ function cliBase() {
                             log.error(`option '${args[1]}' not found on create command. \n`)
                         break;
                 }
+                break;
+            case "help":
+                this.showHelp();
+                break;
+            case "init":
+                log.warn("Initializing project...")
+                this.init();
                 break;
             default:
                 log.error("command not found. \n")
