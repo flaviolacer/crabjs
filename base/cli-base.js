@@ -14,8 +14,9 @@ const log = require("../base/log");
 
 function cliBase() {
     this.init = () => {
-        // copy app.js default
+        // copy app.js default and package json
         fs.copyFileSync(path.join(__dirname, "../templates/init/app.js"), path.join(cjs.config.app_root, 'app.js'));
+        fs.copyFileSync(path.join(__dirname, "../templates/init/package.json"), path.join(cjs.config.app_root, 'package.json'));
         // generate default config
         const source = fs.readFileSync(path.join(__dirname, "../templates/init/crabjs.template"), {encoding: 'utf-8'});
         const template = handlebars.compile(source);
@@ -51,6 +52,8 @@ function cliBase() {
                 const template_init = handlebars.compile(source_init);
                 console.log(template_init(generated_options));
             });
+            log.warn('Dependencies installed!')
+
         } catch (err) {
             log.error(`Oops! cannot create file: ${err.message}.`);
         }

@@ -5,11 +5,10 @@
 function {{name}}() {
     //Uncomment this to test your controller
     /**
-     *
      * @route('/')
      * @method('GET')
      */
-    //this.index = function (req, res) {
+    //this.get = function (req, res) {
     //   res.send("alive");
     //}
 }
