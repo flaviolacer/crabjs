@@ -16,8 +16,15 @@ function mongoDB() {
     let convertFieldsToTypeDefinitions = (fields, definitions) => {
         let whereKeys = Object.keys(fields);
         for (let i = 0, j = whereKeys.length; i < j; i++)
-            if (definitions.fields[whereKeys[i]])
-                fields[whereKeys[i]] = this.setType(fields[whereKeys[i]], definitions.fields[whereKeys[i]].type);
+            if (definitions.fields[whereKeys[i]]) {
+                let fieldKey = whereKeys[i];
+                if (!isEmpty(definitions.fields[whereKeys[i]].field) && definitions.fields[whereKeys[i]].field !== whereKeys[i]) {
+                    fieldKey = definitions.fields[whereKeys[i]].field;
+                    fields[fieldKey] = this.setType(fields[whereKeys[i]], definitions.fields[whereKeys[i]].type);
+                    delete fields[whereKeys[i]];
+                } else
+                    fields[fieldKey] = this.setType(fields[whereKeys[i]], definitions.fields[whereKeys[i]].type);
+            }
     }
 
     this.setType = (value, type) => {
@@ -49,10 +56,14 @@ function mongoDB() {
             log.error(cjs.i18n.__("You have to specify the parameter \"default_collection\" on mongodb configuration."));
             return;
         }
-        if (this.db != null) return this.db; else {
+
+        if (this.db != null && this.isConnected())
+            return this.db;
+        else {
             this.client = await this.getClient();
             if (this.client) this.db = this.client.db(this.__connectionInfo.default_collection);
         }
+
         return this.db;
     };
 
@@ -100,14 +111,15 @@ function mongoDB() {
     this.find = async (options) => {
         let filter = options.filter || {};
         options = options || {};
-        let db = await this.getDb();
-        if (!db) {
-            log.error(cjs.i18n.__("Cannot get \"{{entityName}}\" entities", {entityName: options.entity}));
-            resolve(false);
-            return;
-        }
 
         return new Promise(async (resolve, reject) => {
+            let db = await this.getDb();
+            if (!db) {
+                log.error(cjs.i18n.__("Cannot get \"{{entityName}}\" entities", {entityName: options.entity}));
+                resolve(false);
+                return;
+            }
+
             // convert fields to types
             convertFieldsToTypeDefinitions(filter, options.definitions);
 
@@ -154,25 +166,28 @@ function mongoDB() {
     this.findOne = async (options) => {
         let filter = options.filter || {};
         options = options || {};
-        let db = await this.getDb();
-        if (!db) {
-            log.error(cjs.i18n.__("Cannot get entity {{entityName}}", {entityName: options.entity}));
-            resolve(false);
-            return;
-        }
+        return new Promise(async (resolve, reject) => {
+            let db = await this.getDb();
+            if (!db) {
+                log.error(cjs.i18n.__("Cannot get entity {{entityName}}", {entityName: options.entity}));
+                return;
+            }
 
-        return new Promise(async (resolve) => {
             //convert fields on filter for the right type
             // convert fields to types
             convertFieldsToTypeDefinitions(filter, options.definitions);
 
             let collectionName = options.definitions.entity.data.RepositoryName || options.entity;
-            await db.collection(collectionName).findOne(filter).catch((e) => {
+            try {
+                await db.collection(collectionName).findOne(filter).then((obj) => {
+                    resolve(obj);
+                    return obj;
+                });
+            } catch (e) {
                 log.error(e);
-                resolve(false);
-            }).then((obj) => {
-                resolve(obj);
-            });
+                reject(false);
+                return false;
+            }
         });
     };
 
@@ -262,19 +277,22 @@ function mongoDB() {
                         resolve(false);
                     }).then(() => {
                         resolve(entity);
+                        return true;
                     });
                 else
-                    await db.collection(collectionName).findOneAndUpdate(filter, {$set: entityPersist}, {
-                        upsert: true, returnNewDocument: true
-                    }).catch((e) => {
+                    try {
+                        let ret = await db.collection(collectionName).findOneAndUpdate(filter, {$set: entityPersist}, {
+                            upsert: true, returnNewDocument: true
+                        });
+                        resolve(ret);
+                        return ret;
+                    } catch(e) {
                         if (e.code === 66)
                             log.error(cjs.i18n.__("Error trying to save record on repository. Record id already exists?"));
                         else
                             log.error(e);
                         resolve(false);
-                    }).then(() => {
-                        resolve(entity);
-                    });
+                    }
             }
         });
     };
@@ -339,6 +357,14 @@ function mongoDB() {
         }
         await db.collection(options.entity).insertMany(options.data);
     };
+
+    this.close = async () => {
+        this.client.close();
+    }
+
+    this.isConnected = () => {
+        return !!this.client && !!this.client.topology && this.client.topology.isConnected()
+    }
 }
 
 module.exports = new mongoDB();

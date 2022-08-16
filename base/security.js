@@ -3,31 +3,21 @@ const log = require('./log');
 const Error = require("./error");
 const localStorage = require('./localstorage');
 const jwt = require('jsonwebtoken');
-const securityConfig = cjs.config.security;
+let securityConfig;
 let tokenExpires, encryptionKey, refreshTokenEncryptionSecretKey, refreshTokenExpires;
-
-if (securityConfig) {
-// config values
-    tokenExpires = securityConfig.jwt.token_expires || 300; // 5 min default
-    encryptionKey = securityConfig.encryption_key || securityConfig.jwt.encryption_key;
-    refreshTokenEncryptionSecretKey = securityConfig.jwt.refresh_token.token_secret || encryptionKey; // 5 min default
-    refreshTokenExpires = securityConfig.jwt.refresh_token.token_expires || tokenExpires || 300; // 5 min default
-    cjs.configSecureCredentials = cjs.configSecureCredentials || {};
-    securityConfig.jwt.refresh_token = securityConfig.jwt.refresh_token || {};
-}
 
 /**
  * Add token to revoked list
  * @param tokens
  */
-let addTokenRevokedList = (tokens) => {
+let addTokenRevokedList = async (tokens) => {
     if (isEmpty(tokens)) return;
-    let tokenRevoked = localStorage.getItem("tokenListRevoked") || {};
+    let tokenRevoked = await localStorage.getItem("tokenListRevoked") || {};
     for (let token in tokens) {
         let tokenInfo = tokens[token];
         tokenRevoked[token] = {"date": tokenInfo.date, expires: tokenInfo.expires};
     }
-    localStorage.setItem("tokenListRevoked", tokenRevoked);
+    await localStorage.setItem("tokenListRevoked", tokenRevoked);
 };
 
 /**
@@ -36,8 +26,8 @@ let addTokenRevokedList = (tokens) => {
  * @param token
  * @param refreshToken
  */
-let saveUserToken = (clientId, token, refreshToken) => {
-    let tokenList = localStorage.getItem("tokenList") || {};
+let saveUserToken = async (clientId, token, refreshToken) => {
+    let tokenList = await localStorage.getItem("tokenList") || {};
     tokenList[clientId] = tokenList[clientId] || {};
     let tokensInfo = (securityConfig.jwt.token_replace_new || isEmpty(tokenList[clientId].tokens)) ? {} : tokenList[clientId].tokens;
     tokensInfo[token] = {
@@ -54,16 +44,17 @@ let saveUserToken = (clientId, token, refreshToken) => {
         };
         tokenList[clientId].refreshTokens = refreshTokensInfo;
     }
-    localStorage.setItem("tokenList", tokenList);
+    await localStorage.setItem("tokenList", tokenList);
 }
 
 /**
  * Remove user token
  * @param clientId
+ * @param ignoreRefreshToken
  * @returns {null}
  */
-let removeUserToken = (clientId, ignoreRefreshToken) => {
-    let tokenList = localStorage.getItem("tokenList");
+let removeUserToken = async (clientId, ignoreRefreshToken) => {
+    let tokenList = await localStorage.getItem("tokenList");
     if (tokenList && !isEmpty(tokenList[clientId])) {
         // add on revoked tokens
         addTokenRevokedList(tokenList[clientId].tokens);
@@ -73,7 +64,7 @@ let removeUserToken = (clientId, ignoreRefreshToken) => {
         //erase record
         delete tokenList[clientId];
         // save to storage (last generated)
-        localStorage.setItem("tokenList", tokenList);
+        await localStorage.setItem("tokenList", tokenList);
     } else return null;
 }
 
@@ -97,7 +88,6 @@ let generateToken = (payload, forcedSecretKey, forcedTokenExpires) => {
             expiresIn: forcedTokenExpires
         });
     } catch (e) {
-        let err = new Error(cjs.i18n.__('Access denied. Error on generating token.'), 403);
         log.error(e);
         return null;
     }
@@ -121,8 +111,8 @@ let verifyToken = (token, forcedSecretKey) => {
 /**
  * Remove expired tokens
  */
-let removeExpiredTokens = () => {
-    let tokenList = localStorage.getItem("tokenList");
+let removeExpiredTokens = async () => {
+    let tokenList = await localStorage.getItem("tokenList");
     if (!tokenList) return;
     // remove expired user tokens
     let apiUserClientIds = Object.keys(tokenList);
@@ -143,10 +133,10 @@ let removeExpiredTokens = () => {
         }
     }
     //save updated tokenlist
-    localStorage.setItem("tokenList", tokenList);
+    await localStorage.setItem("tokenList", tokenList);
 
     // remove revoked tokens
-    let tokensRevoked = localStorage.getItem("tokenListRevoked") || {};
+    let tokensRevoked = await localStorage.getItem("tokenListRevoked") || {};
     let tokenRevokedKeys = Object.keys(tokensRevoked);
     for (let i = 0, j = tokenRevokedKeys.length; i < j; i++) {
         let tokenRevokedInfo = tokensRevoked[tokenRevokedKeys[i]];
@@ -155,7 +145,7 @@ let removeExpiredTokens = () => {
         if (secondsRevokedPassed >= tokenRevokedInfo.expires) delete tokensRevoked[tokenRevokedKeys[i]];
     }
     // save updated revoked list
-    localStorage.setItem("tokenListRevoked", tokensRevoked);
+    await localStorage.setItem("tokenListRevoked", tokensRevoked);
 };
 
 /**
@@ -164,16 +154,26 @@ let removeExpiredTokens = () => {
  * @param res
  * @param next
  */
-function security(req, res, next) {
+async function security(req, res, next) {
     if (cjs.config.security && cjs.config.security.jwt) {
+        if (!isEmpty(cjs.config.security))
+            securityConfig = cjs.config.security;
+
+        // config values
+        tokenExpires = securityConfig.jwt.token_expires || 300; // 5 min default
+        encryptionKey = securityConfig.encryption_key || securityConfig.jwt.encryption_key;
+        refreshTokenEncryptionSecretKey = securityConfig.jwt.refresh_token.token_secret || encryptionKey; // 5 min default
+        refreshTokenExpires = securityConfig.jwt.refresh_token.token_expires || tokenExpires || 300; // 5 min default
+        cjs.configSecureCredentials = cjs.configSecureCredentials || {};
+        securityConfig.jwt.refresh_token = securityConfig.jwt.refresh_token || {};
+
         let query = req.query || {};
         let body = req.body || {};
         let headers = req.headers || {};
-        let securityConfig = cjs.config.security;
 
         if (isEmpty(securityConfig.encryption_key || securityConfig.jwt.encryption_key)) {
             let err = new Error(cjs.i18n.__('Access denied. Secret key not set.'), 403);
-            log.error(cjs.i18n.__("You must set the secretKey in config file."));
+            log.error(cjs.i18n.__("You must set the encryption_key in config file."));
             sendJson(res, err, 403);
             return;
         }
@@ -186,17 +186,17 @@ function security(req, res, next) {
         if (urlInfo.pathname === securityConfig.jwt.token_signin_route) { // request token
             let apiUserAuth = {};
             // check if there is clientId and clientSecret on config and matches with sent
-            let testClientId = query[securityConfig.jwt.sign_clientid_field] || body[securityConfig.jwt.sign_clientid_field] || headers[securityConfig.jwt.sign_clientid_field];
-            let testClientSecret = query[securityConfig.jwt.sign_clientid_field] || body[securityConfig.jwt.sign_clientid_field] || headers[securityConfig.jwt.sign_clientid_field];
+            let testClientId = query[securityConfig.jwt.sign_client_id_field] || body[securityConfig.jwt.sign_client_id_field] || headers[securityConfig.jwt.sign_client_id_field];
+            let testClientSecret = query[securityConfig.jwt.sign_client_secret_field] || body[securityConfig.jwt.sign_client_secret_field] || headers[securityConfig.jwt.sign_client_secret_field];
 
-            if (isEmpty(securityConfig.auth_entity)) { // config auth
+            if (isEmpty(securityConfig.security_entity)) { // config auth api
                 if (isEmpty(cjs.configSecureCredentials)) {
                     let configCredentials = securityConfig.credentials || [];
 
                     // validate using user set on config
-                    if ((!isEmpty(securityConfig[securityConfig.jwt.sign_clientid_field]) && !isEmpty(securityConfig[securityConfig.jwt.sign_client_secret_field]))) {
+                    if ((!isEmpty(securityConfig[securityConfig.jwt.sign_client_id_field]) && !isEmpty(securityConfig[securityConfig.jwt.sign_client_secret_field]))) {
                         let configUserCredentials = {};
-                        configUserCredentials[securityConfig.jwt.sign_clientid_field] = securityConfig[securityConfig.jwt.sign_clientid_field];
+                        configUserCredentials[securityConfig.jwt.sign_client_id_field] = securityConfig[securityConfig.jwt.sign_client_id_field];
                         configUserCredentials[securityConfig.jwt.sign_client_secret_field] = securityConfig[securityConfig.jwt.sign_client_secret_field];
                         configCredentials.push(configUserCredentials);
                     }
@@ -204,7 +204,7 @@ function security(req, res, next) {
                     // populate config credentials in memory
                     cjs.configSecureCredentials = {};
                     for (let i = 0, j = configCredentials.length; i < j; i++)
-                        cjs.configSecureCredentials[configCredentials[i][securityConfig.jwt.sign_clientid_field]] = configCredentials[i][securityConfig.jwt.sign_client_secret_field];
+                        cjs.configSecureCredentials[configCredentials[i][securityConfig.jwt.sign_client_id_field]] = configCredentials[i][securityConfig.jwt.sign_client_secret_field];
                 }
 
                 // check if credentials exists
@@ -213,7 +213,15 @@ function security(req, res, next) {
                     apiUserAuth.clientSecret = testClientSecret;
                 }
             } else {
-                //TODO: Implement repository
+                let em = cjs.entityManager;
+                let credentialSearchFields = {};
+                credentialSearchFields[securityConfig.jwt.sign_client_id_field] = testClientId;
+                credentialSearchFields[securityConfig.jwt.sign_client_secret_field] = testClientSecret;
+                let credentials = await em.getEntity(securityConfig.security_entity, credentialSearchFields);
+                if (credentials) {
+                    apiUserAuth.clientId = testClientId;
+                    apiUserAuth.clientSecret = testClientSecret;
+                }
             }
 
             // do the authentication
@@ -236,9 +244,9 @@ function security(req, res, next) {
                 sendJson(res, err, 403);
             }
         } else if (urlInfo.pathname === securityConfig.jwt.refresh_token.refresh_token_route) { // refresh token - new token
-            if (isEmpty(req.refresh_token)) req.refresh_token = (!isEmpty(securityConfig.jwt.refresh_token.refresh_token_field)) ? query[securityConfig.jwt.refresh_token.refresh_token_field] || body[securityConfig.jwt.refresh_token.refresh_token_field] : null;
+            if (isEmpty(req.refresh_token)) req.refresh_token = (!isEmpty(securityConfig.jwt.refresh_token.refresh_token_field)) ? query[securityConfig.jwt.refresh_token.refresh_token_field] || headers[securityConfig.jwt.refresh_token.refresh_token_field] || body[securityConfig.jwt.refresh_token.refresh_token_field] : null;
             //check if token is revoked
-            let tokensRevoked = localStorage.getItem("tokenListRevoked") || {};
+            let tokensRevoked = await localStorage.getItem("tokenListRevoked") || {};
             let authData = verifyToken(req.refresh_token, refreshTokenEncryptionSecretKey);
             if (isEmpty(tokensRevoked[req.refresh_token]) && authData) {
                 // generate new token
@@ -262,7 +270,8 @@ function security(req, res, next) {
             }
             // remove expired tokens
             removeExpiredTokens();
-        } else if (cjs.secBypassRoutes.contains(urlInfo.pathname)) next(); else { // not bypassed
+        } else if (cjs.secBypassRoutes.contains(urlInfo.pathname.replaceAll("/",""))) next();
+        else { // not bypassed
             //Check if bearer exists
             if (securityConfig.jwt.token_bearer) {
                 const bearerHeader = headers['authorization'];
@@ -276,14 +285,14 @@ function security(req, res, next) {
             }
 
             // check if token was sent using token field
-            if (isEmpty(req.token)) req.token = (!isEmpty(securityConfig.jwt.token_field)) ? query[securityConfig.jwt.token_field] || body[securityConfig.jwt.token_field] : null;
+            if (isEmpty(req.token)) req.token = (!isEmpty(securityConfig.jwt.token_field)) ? query[securityConfig.jwt.token_field] || headers[securityConfig.jwt.token_field] || body[securityConfig.jwt.token_field] : null;
 
             if (isEmpty(req.token)) {
                 let err = new Error(cjs.i18n.__('Access denied'), 403);
                 sendJson(res, err, 403);
             } else { // verify token
                 //check if token is revoked
-                let tokensRevoked = localStorage.getItem("tokenListRevoked") || {};
+                let tokensRevoked = await localStorage.getItem("tokenListRevoked") || {};
                 let authData = verifyToken(req.token);
                 if (isEmpty(tokensRevoked[req.token]) && authData) {
                     req.token_data = authData;

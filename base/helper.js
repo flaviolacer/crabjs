@@ -37,7 +37,7 @@ global.containsObjectKey = function (obj, k, key) {
 
 //global functions
 global.isEmpty = function (obj) {
-    return ((typeof obj === 'undefined' || obj === null || obj === '') || (isArray(obj) && (obj.length === 0)) || (isObject(obj) && (Object.keys(obj).length === 0 && obj.constructor === Object)));
+    return ((typeof obj === 'undefined' || obj === null || obj === '') || (isArray(obj) && (obj.length === 0) && Object.keys(obj).length === 0) || (isObject(obj) && (Object.keys(obj).length === 0 && obj.constructor === Object)));
 };
 
 global.sendJson = (res, content, status) => {

@@ -1,0 +1,36 @@
+/**
+ * @Entity
+ * @RepositoryName('products')
+ */
+function product() {
+    /**
+     * @field
+     * @primaryKey
+     * @type = objectId
+     * */
+    this._id;
+
+    /** @field */
+    this.name;
+
+    /**
+     * @field
+     * @required
+     */
+    this.description;
+
+    /**
+     * @field
+     * @type = float
+     */
+    this.price;
+
+    /**
+     * @contructor
+     */
+    this.test = function() {
+
+    }
+}
+
+module.exports = product;

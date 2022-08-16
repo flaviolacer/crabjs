@@ -2,20 +2,23 @@ const cjs = require("./cjs");
 const log = require('./log');
 const fs = require('fs');
 const path = require("path");
+cjs.entityManager = require("./entity-manager");
 
 class LocalStorage {
     static dictionary;
 
-    constructor(options) {
+    constructor() {
         log.info("Initializing localStorage");
         this.default_options = extend({
             "type": "file"
-        }, options);
+        }, cjs.config.local_storage);
 
-        LocalStorage.dictionary = {};
-        this.filename = !isEmpty(cjs.config.local_storage.filename) ? cjs.config.local_storage.filename : "ls.json";
-        this.storagePath = path.join(cjs.config.app_root, cjs.config.cache_storage_path, cjs.config.local_storage.path);
-        this.filePath = path.join(this.storagePath, this.filename);
+        if (this.default_options.type === "file") {
+            LocalStorage.dictionary = {};
+            this.filename = !isEmpty(cjs.config.local_storage.filename) ? cjs.config.local_storage.filename : "ls.json";
+            this.storagePath = path.join(cjs.config.app_root, cjs.config.cache_storage_path, cjs.config.local_storage.path);
+            this.filePath = path.join(this.storagePath, this.filename);
+        }
 
         this.loadData();
     }
@@ -23,16 +26,16 @@ class LocalStorage {
     loadFileData() {
         if (fs.existsSync(this.filePath)) {
             let contents = fs.readFileSync(this.filePath);
-            if (!isEmpty(contents.toString()))
-                LocalStorage.dictionary = JSON.parse(contents);
+            if (!isEmpty(contents.toString())) LocalStorage.dictionary = JSON.parse(contents);
         }
     }
 
     loadData() {
         switch (this.default_options.type) {
             case "file":
-            default:
                 this.loadFileData();
+                break;
+            default:
                 break;
         }
     }
@@ -51,14 +54,29 @@ class LocalStorage {
         }
     }
 
-    setItem(key, value) {
-        if (key && value)
-            LocalStorage.dictionary[key] = value;
-        this.saveData();
+    async setItem(key, value) {
+        if (this.default_options.type === "file") {
+            if (key && value) LocalStorage.dictionary[key] = value;
+            this.saveData();
+        } else if (this.default_options.type === "repository") {
+            let em = cjs.entityManager;
+            let item = await em.setEntity(this.default_options.entity, {
+                key: key, value: value
+            });
+            item.save();
+        }
     }
 
-    getItem(key) {
-        return LocalStorage.dictionary[key];
+    async getItem(key) {
+        if (this.default_options.type === "file") {
+            return LocalStorage.dictionary[key];
+        } else if (this.default_options.type === "repository") {
+            let em = cjs.entityManager;
+            let item = await em.getEntity(this.default_options.entity, {
+                key: key
+            });
+            if (item) return item.value; else return null;
+        }
     }
 }
 

@@ -1,17 +1,16 @@
 require("../../base/helper");
 let cjs = require('../../base/cjs');
-cjs.config = require("../../defaults.json")
-cjs.config.app_root = __dirname;
-cjs.config.security = null; // disabling security
+const core = require("../../base/core");
 const routerManager = require('../../base/router-manager');
 const assert = require('assert');
-const core = require("../../base/core");
-cjs.i18n = core.loadLocales();
 const axios = require('axios').default;
 const defaultUrl = "http://127.0.0.1:3000"; // default loopback
 const defaultController = '/product';
 
 describe('Testing routing functions', function () {
+    // removing security
+    cjs.config.security = null; // disabling security
+
     // removing timeout from test phase
     this.timeout(0);
     it('Test if core was initialized and loading routes', () => {

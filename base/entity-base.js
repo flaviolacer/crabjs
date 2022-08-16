@@ -1,3 +1,4 @@
+const cjs = require("./cjs");
 const repositoryManager = require("./repository-manager");
 const log = require('./log');
 
@@ -27,8 +28,10 @@ function Entity() {
         options.entity = this; // send entity
 
         log.info(cjs.i18n.__('Saving entity "{{entityName}}"...', {entityName: this.entityName}));
-        if (await repositoryManager.save(options))
+        let ret = await repositoryManager.save(options);
+        if(ret)
             log.info(cjs.i18n.__('Entity "{{entityName}}" saved', {entityName: this.entityName}));
+        return ret;
     };
 
     this.remove = async (options) => {

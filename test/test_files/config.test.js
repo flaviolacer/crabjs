@@ -1,7 +1,5 @@
 require("../../base/helper");
 let cjs = require('../../base/cjs');
-cjs.config = require("../../defaults.json");
-cjs.config.app_root = __dirname;
 const core = require("../../base/core");
 const assert = require('assert');
 

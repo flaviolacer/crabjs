@@ -25,5 +25,12 @@
 	"Access denied. Invalid token.": "Access denied. Invalid token.",
 	"You must set the secretKey in config file.": "You must set the secretKey in config file.",
 	"Access denied. Invalid refresh token.": "Access denied. Invalid refresh token.",
-	"Access denied. Error on generating token.": "Access denied. Error on generating token."
+	"Access denied. Error on generating token.": "Access denied. Error on generating token.",
+	"Entity definition not found. Missing create it {{name}}?": "Entity definition not found. Missing create it {{name}}?",
+	"Cannot save entity in empty repository. No defalut repository is set": "Cannot save entity in empty repository. No defalut repository is set",
+	"Cannot save entity in empty repository. No defautt repository is set": "Cannot save entity in empty repository. No defautt repository is set",
+	"Could not retrive data from repository.": "Could not retrive data from repository.",
+	"Entity not defined on repository": "Entity not defined on repository",
+	"Entity not defined. Did you missed the file on directory?": "Entity not defined. Did you missed the file on directory?",
+	"Error on converting ObjectId Field: '{{value}}'": "Error on converting ObjectId Field: '{{value}}'"
 }

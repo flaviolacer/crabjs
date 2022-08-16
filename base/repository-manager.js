@@ -10,7 +10,7 @@ class RepositoryManager {
     getConnection(repository) {
         repository = repository || (cjs.config.repository ? cjs.config.repository.default : null);
         if (isEmpty(repository)) {
-            log.error(cjs.i18n.__("Cannot save entity in empty repository. No defalut repository is set"));
+            log.error(cjs.i18n.__("Cannot save entity in empty repository. No defautt repository is set"));
             return;
         }
 
@@ -37,32 +37,33 @@ class RepositoryManager {
     async save(options) {
         options.__errorMessage = "Cannot save entity \"{{entityName}}\", connection not found.";
         options.__command = "save";
-        return this.sendCommand(options);
+        return await this.sendCommand(options);
     }
 
     async remove(options) {
         options.__errorMessage = "Cannot remove entity \"{{entityName}}\", connection not found.";
         options.__command = "remove";
-        return this.sendCommand(options);
+        await this.sendCommand(options);
     }
 
-    insertBatch(options) {
+    async insertBatch(options) {
         options.__errorMessage = "Cannot save batch using repository \"{{repository}}\"";
         options.__command = "insertBatch";
-        return this.sendCommand(options);
+        await this.sendCommand(options);
     }
 
     async sendCommand(options) {
         let repository = options.repository || options.entity.repository;
         let conn = this.getConnection(options.repository);
 
-        if (isEmpty(conn))
+        if (isEmpty(conn)) {
             log.error(cjs.i18n.__(options.__errorMessage, {
                 repository: repository,
                 entityName: (options.entity) ? options.entity.entityName : null
             }));
-        else
-            await conn[options.__command](options);
+            return false
+        }
+        return await conn[options.__command](options);
     }
 
     async findOne(options) {
@@ -70,7 +71,8 @@ class RepositoryManager {
         if (isEmpty(conn))
             log.error(cjs.i18n.__("Cannot find one data using repository \"{{options.repository}}\"", {repository: options.repository}));
         else
-            return await conn.findOne(options).catch(function () {
+            return await conn.findOne(options).catch(function (e) {
+                log.error(e);
                 return false;
             }).then(function (obj) {
                 return obj;
@@ -87,6 +89,16 @@ class RepositoryManager {
             }).then(function (data) {
                 return data;
             });
+    }
+
+    close(connection) {
+        if (connection) {
+        } else {
+            if (!isEmpty(RepositoryManager.connections))
+                Object.keys(RepositoryManager.connections).forEach(function(key) {
+                    RepositoryManager.connections[key].close();
+                });
+        }
     }
 }
 

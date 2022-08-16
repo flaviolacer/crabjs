@@ -19,6 +19,10 @@ function entityManager() {
         if (!cjs.entityManager.__entityDefinitions[name]) {
             let annotations = annotation.parseSync(entityFilepath);
 
+            if (isEmpty(annotations)) {
+                return false;
+            }
+
             // when class, merge function and classes - ES6
             if (annotations.classes) {
                 let classKeys = Object.keys(annotations.classes);
@@ -90,7 +94,7 @@ function entityManager() {
      * @param initContent
      * @returns Entity
      */
-    this.newEntity = (name, initContent) => {
+    this.setEntity = (name, initContent) => {
         let newEntityObj = createEntity(name);
         if (initContent) { // map content to entity definitions
             if (!isObject(initContent))
@@ -107,6 +111,14 @@ function entityManager() {
         }
         return newEntityObj;
     };
+
+    /**
+     * new entity
+     * @param name
+     * @param initContent
+     * @returns Entity
+     */
+    this.newEntity = this.setEntity;
 
     /**
      * Get information about detected annotations
@@ -207,6 +219,11 @@ function entityManager() {
             log.info(cjs.i18n.__("Get entity from repository"));
 
             let entityDefinitions = getEntityDefinition(entity);
+            if (!entityDefinitions) {
+                log.error(cjs.i18n.__("Entity not defined. Did you missed the file on directory?"));
+                reject(false);
+                return false;
+            }
             let entityData = null;
             try {
                 entityData = await repositoryManager.findOne({

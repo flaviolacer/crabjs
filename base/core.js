@@ -2,7 +2,7 @@ const path = require("path");
 const express = require('express');
 const http = require("http");
 const log = require("./log");
-const cjs = require("./cjs");
+let cjs = require("./cjs");
 const fs = require("fs");
 const { I18n } = require('i18n')
 
@@ -90,10 +90,12 @@ function core() {
             let localAddresses = ['::','127.0.0.1'];
             host = (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
 
-            log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------');
-            log.force('\x1b[36m%s\x1b[0m', '   '+cjs.i18n.__('CrabJS started!'));
-            log.force('\x1b[36m%s\x1b[0m', '   '+cjs.i18n.__('Server started at "')+host+':'+bind+'"');
-            log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------\n');
+            if (!cjs.config.hide_start_log) {
+                log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------');
+                log.force('\x1b[36m%s\x1b[0m', '   ' + cjs.i18n.__('CrabJS started!'));
+                log.force('\x1b[36m%s\x1b[0m', '   ' + cjs.i18n.__('Server started at "') + host + ':' + bind + '"');
+                log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------\n');
+            }
         }
     }
 

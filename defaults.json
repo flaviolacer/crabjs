@@ -11,7 +11,7 @@
     "jwt": {
       "token_signin_route": "/auth/signin",
       "token_field": "access_token",
-      "sign_clientid_field" : "client_id",
+      "sign_client_id_field" : "client_id",
       "sign_client_secret_field" : "client_secret",
       "token_bearer": true,
       "token_expires" : 300,
