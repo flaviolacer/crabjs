@@ -12,11 +12,15 @@ function entityManager() {
     // initialize entityDefinitions
     this.__entityDefinitions = {};
     let getEntityDefinition = (name) => {
-        let entityFilename = name.contains("\\.") ? name : name + '.js';
-        let entityFilepath = path.join(config.server_entities_path, entityFilename);
 
         // check if already exists in memory
         if (!cjs.entityManager.__entityDefinitions[name]) {
+            let entityFilename = name.contains("\\.") ? name : name + '.js';
+            let entityFilepath = path.join(config.server_entities_path, entityFilename);
+            if (!fs.existsSync(entityFilepath)) {
+                entityFilepath = path.join(__dirname,"./entity/", entityFilename);
+            }
+
             let annotations = annotation.parseSync(entityFilepath);
 
             if (isEmpty(annotations)) {
@@ -60,8 +64,12 @@ function entityManager() {
         let entityFilename = name.contains("\\.") ? name : name + '.js';
         let entityFilepath = path.join(config.server_entities_path, entityFilename);
         if (!fs.existsSync(entityFilepath)) {
-            log.error(cjs.i18n.__('Entity definition not found. Missing create it {{name}}?', {name: name}));
-            return;
+            // system entity?
+            entityFilepath = path.join(__dirname,"./entity/", entityFilename);
+            if(!fs.existsSync(entityFilepath)) {
+                log.error(cjs.i18n.__('Entity definition not found. Missing create it {{name}}?', {name: name}));
+                return;
+            }
         }
         // create entity and extend is to base
         let newEntityInstantiated = require(entityFilepath);

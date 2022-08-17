@@ -1,42 +1,44 @@
 {
-  "server_config_filename" : "crabjs.json",
+  "server_config_filename": "crabjs.json",
   "server_port": 3000,
   "server_timeout": 300000,
   "server_controllers_path": "controller",
   "server_entities_path": "entity",
-  "debug" : {
-    "level" : "error"
+  "debug": {
+    "level": "error"
   },
   "security": {
     "jwt": {
       "token_signin_route": "/auth/signin",
       "token_field": "access_token",
-      "sign_client_id_field" : "client_id",
-      "sign_client_secret_field" : "client_secret",
+      "sign_client_id_field": "client_id",
+      "sign_client_secret_field": "client_secret",
       "token_bearer": true,
-      "token_expires" : 300,
-      "token_replace_new" : true,
+      "token_expires": 300,
+      "token_replace_new": true,
       "remove_tokens_auth": true,
-      "refresh_token" : {
-        "token_expires" : 18000,
-        "encryption_key" : null,
-        "token_replace_new" : true,
-        "reset_refresh_token" : true,
-        "refresh_token_route" : "/auth/token",
+      "refresh_token": {
+        "token_expires": 18000,
+        "encryption_key": null,
+        "token_replace_new": true,
+        "reset_refresh_token": true,
+        "refresh_token_route": "/auth/token",
         "refresh_token_field": "refresh_token"
       }
-    }
+    },
+    "security_repository": false,
+    "security_entity": "__access_credential"
   },
   "language": "en",
-  "local_storage" : {
-    "type" : "file",
-    "filename" : "",
-    "path" : "localstorage"
+  "local_storage": {
+    "type": "file",
+    "filename": "",
+    "path": "localstorage"
   },
-  "token_storage" : {
-    "type" : "file",
-    "filename" : "",
-    "path" : "tokenstorage"
+  "token_storage": {
+    "type": "file",
+    "filename": "",
+    "path": "tokenstorage"
   },
-  "cache_storage_path" : "cache"
+  "cache_storage_path": "cache"
 }

@@ -32,5 +32,6 @@
 	"Could not retrive data from repository.": "Could not retrive data from repository.",
 	"Entity not defined on repository": "Entity not defined on repository",
 	"Entity not defined. Did you missed the file on directory?": "Entity not defined. Did you missed the file on directory?",
-	"Error on converting ObjectId Field: '{{value}}'": "Error on converting ObjectId Field: '{{value}}'"
+	"Error on converting ObjectId Field: '{{value}}'": "Error on converting ObjectId Field: '{{value}}'",
+	"Could not erase data from repository.": "Could not erase data from repository."
 }

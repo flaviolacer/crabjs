@@ -96,7 +96,7 @@ async function security(req, res, next) {
             let testClientId = query[securityConfig.jwt.sign_client_id_field] || body[securityConfig.jwt.sign_client_id_field] || headers[securityConfig.jwt.sign_client_id_field];
             let testClientSecret = query[securityConfig.jwt.sign_client_secret_field] || body[securityConfig.jwt.sign_client_secret_field] || headers[securityConfig.jwt.sign_client_secret_field];
 
-            if (isEmpty(securityConfig.security_entity)) { // config auth api
+            if (!securityConfig.security_repository) { // config auth api
                 if (isEmpty(cjs.configSecureCredentials)) {
                     let configCredentials = securityConfig.credentials || [];
 

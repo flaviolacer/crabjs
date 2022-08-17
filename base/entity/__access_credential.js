@@ -1,8 +1,8 @@
 /**
  * @Entity
- * @RepositoryName('access_credentials')
+ * @RepositoryName('__access_credentials')
  */
-function access_credential() {
+function __access_credential() {
     /**
      * @field
      * @primaryKey
@@ -25,4 +25,4 @@ function access_credential() {
     this.description;
 }
 
-module.exports = access_credential;
+module.exports = __access_credential;

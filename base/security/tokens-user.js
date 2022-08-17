@@ -7,7 +7,7 @@ const revokedTokenStorage = require('./tokens-revoked');
 
 class tokensUsers {
     type = "file";
-    entity = "";
+    entity = "__access_storage";
 
     getFileStorage() {
         this.securityConfig = cjs.config.security;

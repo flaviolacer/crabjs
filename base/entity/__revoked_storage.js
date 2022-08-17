@@ -1,16 +1,16 @@
-const rm = require("../../../base/repository-manager");
-const cjs = require("../../../base/cjs");
+const rm = require("../../base/repository-manager");
+const cjs = require("../../base/cjs");
 
 /**
  * @Entity
- * @RepositoryName('access_storage')
+ * @RepositoryName('__revoked_storage')
  */
-function access_storage() {
+function __revoked_storage() {
     /**
      * @field("_id")
      * @primaryKey
      **/
-    let _id;
+    let token;
 
     /** @field */
     let client_id;
@@ -18,14 +18,8 @@ function access_storage() {
     /** @field */
     let data;
 
-    /**
-     * @field
-     * @type = boolean
-     **/
-    let refresh_token;
-
     this.removeExpired = async function () {
-        let entityName = "access_storage";
+        let entityName = "__revoked_storage";
         let md = rm.getConnection();
         let entity = cjs.entityManager.loadEntity(entityName);
         // specific to mongodb
@@ -61,7 +55,6 @@ function access_storage() {
             await md.remove({_id: expiredToken._id, definitions: entity.__definitions });
         }
     }
-
 }
 
-module.exports = access_storage;
+module.exports = __revoked_storage;

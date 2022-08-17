@@ -6,7 +6,7 @@ const log = require("../log");
 
 class tokensRevoked {
     type = "file";
-    entity = "";
+    entity = "__revoked_storage";
 
     getFileStorage() {
         this.dictionary = {};
