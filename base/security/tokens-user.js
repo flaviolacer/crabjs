@@ -61,14 +61,14 @@ class tokensUsers {
             return this.dictionary[key];
         }
 
-        this.remove = (clientId, ignoreRefreshToken) => {
+        this.remove = async (clientId, ignoreRefreshToken) => {
             loadFileData();
             if (!isEmpty(this.dictionary[clientId])) {
                 // add on revoked tokens
-                revokedTokenStorage.addToken(this.dictionary[clientId].tokens);
+                await revokedTokenStorage.addToken(clientId, this.dictionary[clientId].tokens);
                 // add on revoked refresh Tokens
                 if (!ignoreRefreshToken)
-                    revokedTokenStorage.addToken(this.dictionary[clientId].refreshTokens);
+                    await revokedTokenStorage.addToken(clientId, this.dictionary[clientId].refreshTokens);
                 //erase record
                 delete this.dictionary[clientId];
                 // save to storage (last generated)
@@ -108,29 +108,36 @@ class tokensUsers {
 
         this.save = async (clientId, token, refreshToken, expires, refreshTokenExpires) => {
             let repositoryInfo = await this.em.getEntity(this.entity, {client_id: clientId});
-            let tokensInfo = (this.securityConfig.jwt.token_replace_new || isEmpty(repositoryInfo.tokens)) ? {} : repositoryInfo.tokens;
-            tokensInfo[token] = {
+            let tokensInfo = (this.securityConfig.jwt.token_replace_new || isEmpty(repositoryInfo.data)) ? {
+                "token": token,
                 "date": new Date(),
                 "expires": expires
-            };
+            } : repositoryInfo.data;
 
             if (isEmpty(repositoryInfo)) {
                 repositoryInfo = this.em.newEntity(this.entity);
                 repositoryInfo.client_id = clientId;
             }
 
-            repositoryInfo = repositoryInfo || {};
-            repositoryInfo.tokens = tokensInfo;
+            repositoryInfo.refresh_token = false;
+            repositoryInfo.data = tokensInfo;
+
+            await repositoryInfo.save();
 
             if (!isEmpty(refreshToken)) {
-                let refreshTokensInfo = (this.securityConfig.jwt.refresh_token.token_replace_new || isEmpty(repositoryInfo.refreshTokens)) ? {} : repositoryInfo.refreshTokens;
-                refreshTokensInfo[refreshToken] = {
+                let refreshTokensInfo = {
+                    "token": refreshToken,
                     "date": new Date(),
                     "expires": refreshTokenExpires
                 };
-                repositoryInfo.refreshTokens = refreshTokensInfo;
+
+                let repositoryRefreshInfo = await this.em.newEntity(this.entity, {
+                    client_id: clientId,
+                    data: refreshTokensInfo,
+                    refresh_token: true
+                });
+                await repositoryRefreshInfo.save();
             }
-            await repositoryInfo.save();
         }
 
         this.get = async (client_id) => {
@@ -138,20 +145,22 @@ class tokensUsers {
         }
 
         this.remove = async (clientId, ignoreRefreshToken) => {
-            let repositoryInfo = await this.get(clientId);
-            if (!isEmpty(repositoryInfo)) {
+            let filter = {client_id: clientId};
+            if (ignoreRefreshToken)
+                filter.refresh_token = false;
+            let tokens = await this.em.getEntities(this.entity, filter);
+            for (let i = 0, j = tokens.length; i < j; i++) {
+                let tokenInfo = tokens[i];
                 // add on revoked tokens
-                revokedTokenStorage.addToken(repositoryInfo.tokens);
-                // add on revoked refresh Tokens
-                if (!ignoreRefreshToken)
-                    revokedTokenStorage.addToken(repositoryInfo.refreshTokens);
-                //erase record
-                await repositoryInfo.remove();
+                await revokedTokenStorage.addToken(clientId, tokenInfo.data);
             }
+            await this.em.removeEntities(this.entity, {client_id: clientId});
         }
 
         this.removeExpired = () => {
-
+            // remove revoked tokens
+            let revokedStorage = this.em.loadEntity(this.entity);
+            revokedStorage.removeExpired();
         }
         return this;
     }
@@ -165,7 +174,6 @@ class tokensUsers {
             default:
                 break;
         }
-
     }
 
     /**

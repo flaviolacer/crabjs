@@ -10,16 +10,22 @@ function access_storage() {
      * @field("_id")
      * @primaryKey
      **/
+    let _id;
+
+    /** @field */
     let client_id;
 
     /** @field */
-    let tokens;
+    let data;
 
-    /** @field */
-    let refreshTokens;
+    /**
+     * @field
+     * @type = boolean
+     **/
+    let refresh_token;
 
     this.removeExpired = async function () {
-        let entityName = "revoked_storage";
+        let entityName = "access_storage";
         let md = rm.getConnection();
         let entity = cjs.entityManager.loadEntity(entityName);
         // specific to mongodb

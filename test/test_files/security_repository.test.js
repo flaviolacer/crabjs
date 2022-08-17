@@ -148,6 +148,10 @@ describe('Testing security functions and configs with repository', function () {
         try {
             // remove credentials
             await em.removeEntities(cjs.config.security.security_entity, securityCredentials);
+            // remove tokens
+            await em.removeEntities(userTokenStorage.entity, {client_id: securityCredentials[defaultClientIdField]});
+            // remove revoked tokens
+            await em.removeEntities(revokedTokenStorage.entity, {client_id: securityCredentials[defaultClientIdField]});
 
             core.stopServer();
             repositoryManager.close();

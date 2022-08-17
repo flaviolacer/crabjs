@@ -33,8 +33,9 @@ class tokensRevoked {
             }
         }
 
-        this.save = (key, value) => {
+        this.save = (clientId, key, value) => {
             loadFileData();
+            value.client_id = clientId;
             this.dictionary[key] = value;
             saveFileData();
         }
@@ -70,9 +71,9 @@ class tokensRevoked {
         this.get = async (key) => {
             return await this.em.getEntity(this.entity, {token: key});
         }
-        this.save = async (key, value) => {
-           let tokenItem = this.em.setEntity(this.entity, {token: key, data: value});
-           await tokenItem.save();
+        this.save = async (clientId, key, value) => {
+            let tokenItem = this.em.setEntity(this.entity, {token: key, client_id: clientId, data: value});
+            await tokenItem.save();
         }
         this.remove = async (key) => {
             await this.em.remove(this.entity, {token: key});
@@ -101,14 +102,12 @@ class tokensRevoked {
 
     /**
      * Add token to revoked list
-     * @param tokens
-     */
-    addToken(tokens) {
+     * @param clientId
+     * @param data
+     **/
+    async addToken(clientId, data) {
         let repository = this.getRepository();
-        for (let token in tokens) {
-            let tokenInfo = tokens[token];
-            repository.save(token, {"date": tokenInfo.date, expires: tokenInfo.expires});
-        }
+        await repository.save(clientId, data.token, {"date": data.date, expires: data.expires});
     }
 
     getToken(key) {

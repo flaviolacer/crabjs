@@ -13,6 +13,9 @@ function revoked_storage() {
     let token;
 
     /** @field */
+    let client_id;
+
+    /** @field */
     let data;
 
     this.removeExpired = async function () {
