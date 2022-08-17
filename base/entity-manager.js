@@ -121,6 +121,15 @@ function entityManager() {
     this.newEntity = this.setEntity;
 
     /**
+     * Load entity class
+     * @param name
+     * @returns Entity
+     */
+    this.loadEntity = (name) => {
+         return createEntity(name);
+    };
+
+    /**
      * Get information about detected annotations
      * @param annotations
      * @returns entityInfo

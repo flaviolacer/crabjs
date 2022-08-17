@@ -1,72 +1,11 @@
 const cjs = require("./cjs");
 const log = require('./log');
 const Error = require("./error");
-const localStorage = require('./localstorage');
+const userTokenStorage = require('./security/tokens-user');
+const revokedTokenStorage = require('./security/tokens-revoked');
 const jwt = require('jsonwebtoken');
 let securityConfig;
 let tokenExpires, encryptionKey, refreshTokenEncryptionSecretKey, refreshTokenExpires;
-
-/**
- * Add token to revoked list
- * @param tokens
- */
-let addTokenRevokedList = async (tokens) => {
-    if (isEmpty(tokens)) return;
-    let tokenRevoked = await localStorage.getItem("tokenListRevoked") || {};
-    for (let token in tokens) {
-        let tokenInfo = tokens[token];
-        tokenRevoked[token] = {"date": tokenInfo.date, expires: tokenInfo.expires};
-    }
-    await localStorage.setItem("tokenListRevoked", tokenRevoked);
-};
-
-/**
- * Save user token
- * @param clientId
- * @param token
- * @param refreshToken
- */
-let saveUserToken = async (clientId, token, refreshToken) => {
-    let tokenList = await localStorage.getItem("tokenList") || {};
-    tokenList[clientId] = tokenList[clientId] || {};
-    let tokensInfo = (securityConfig.jwt.token_replace_new || isEmpty(tokenList[clientId].tokens)) ? {} : tokenList[clientId].tokens;
-    tokensInfo[token] = {
-        "date": new Date(),
-        "expires": tokenExpires
-    };
-    tokenList[clientId].tokens = tokensInfo;
-
-    if (refreshToken) {
-        let refreshTokensInfo = (securityConfig.jwt.refresh_token.token_replace_new || isEmpty(tokenList[clientId].refreshTokens)) ? {} : tokenList[clientId].refreshTokens;
-        refreshTokensInfo[refreshToken] = {
-            "date": new Date(),
-            "expires": refreshTokenExpires
-        };
-        tokenList[clientId].refreshTokens = refreshTokensInfo;
-    }
-    await localStorage.setItem("tokenList", tokenList);
-}
-
-/**
- * Remove user token
- * @param clientId
- * @param ignoreRefreshToken
- * @returns {null}
- */
-let removeUserToken = async (clientId, ignoreRefreshToken) => {
-    let tokenList = await localStorage.getItem("tokenList");
-    if (tokenList && !isEmpty(tokenList[clientId])) {
-        // add on revoked tokens
-        addTokenRevokedList(tokenList[clientId].tokens);
-        // add on revoked refresh Tokens
-        if (!ignoreRefreshToken)
-            addTokenRevokedList(tokenList[clientId].refreshTokens);
-        //erase record
-        delete tokenList[clientId];
-        // save to storage (last generated)
-        await localStorage.setItem("tokenList", tokenList);
-    } else return null;
-}
 
 /**
  * Generate new token
@@ -112,40 +51,8 @@ let verifyToken = (token, forcedSecretKey) => {
  * Remove expired tokens
  */
 let removeExpiredTokens = async () => {
-    let tokenList = await localStorage.getItem("tokenList");
-    if (!tokenList) return;
-    // remove expired user tokens
-    let apiUserClientIds = Object.keys(tokenList);
-    for (let i = 0, j = apiUserClientIds.length; i < j; i++) {
-        let apiUserInfo = tokenList[apiUserClientIds[i]];
-        let tokens = extend({}, apiUserInfo.tokens || {}, apiUserInfo.refreshTokens || {});
-        let tokensValues = Object.keys(tokens);
-        for (let k = 0, n = tokensValues.length; k < n; k++) {
-            let tokenInfo = tokens[tokensValues[k]];
-            if (isString(tokenInfo.date)) tokenInfo.date = new Date(tokenInfo.date);
-            let secondsPassed = Math.abs((new Date().getTime() - tokenInfo.date.getTime()) / 1000);
-            if (secondsPassed >= tokenInfo.expires) {
-                if (apiUserInfo.tokens[tokensValues[k]])
-                    delete apiUserInfo.tokens[tokensValues[k]]
-                else
-                    delete apiUserInfo.refreshTokens[tokensValues[k]];
-            }
-        }
-    }
-    //save updated tokenlist
-    await localStorage.setItem("tokenList", tokenList);
-
-    // remove revoked tokens
-    let tokensRevoked = await localStorage.getItem("tokenListRevoked") || {};
-    let tokenRevokedKeys = Object.keys(tokensRevoked);
-    for (let i = 0, j = tokenRevokedKeys.length; i < j; i++) {
-        let tokenRevokedInfo = tokensRevoked[tokenRevokedKeys[i]];
-        if (isString(tokenRevokedInfo.date)) tokenRevokedInfo.date = new Date(tokenRevokedInfo.date);
-        let secondsRevokedPassed = Math.abs((new Date().getTime() - tokenRevokedInfo.date.getTime()) / 1000);
-        if (secondsRevokedPassed >= tokenRevokedInfo.expires) delete tokensRevoked[tokenRevokedKeys[i]];
-    }
-    // save updated revoked list
-    await localStorage.setItem("tokenListRevoked", tokensRevoked);
+    await userTokenStorage.removeTokenExpired();
+    await revokedTokenStorage.removeTokenExpired();
 };
 
 /**
@@ -229,16 +136,16 @@ async function security(req, res, next) {
                 let response = {token: generateToken(apiUserAuth)};
                 // remove old token
                 if (securityConfig.jwt.remove_tokens_auth)
-                    removeUserToken(apiUserAuth.clientId);
+                    await userTokenStorage.removeToken(apiUserAuth.clientId);
                 // generate refreshToken
                 if (securityConfig.jwt.refresh_token)
                     response.refreshToken = generateToken(apiUserAuth, refreshTokenEncryptionSecretKey, refreshTokenExpires);
                 // save new token
-                saveUserToken(apiUserAuth.clientId, response.token, response.refreshToken);
+                await userTokenStorage.addToken(apiUserAuth.clientId, response.token, response.refreshToken, tokenExpires, refreshTokenExpires);
 
                 sendJson(res, response, 200);
                 // remove expired tokens
-                removeExpiredTokens();
+                await removeExpiredTokens();
             } else {
                 let err = new Error(cjs.i18n.__('Access denied. Invalid credentials.'), 403);
                 sendJson(res, err, 403);
@@ -246,9 +153,8 @@ async function security(req, res, next) {
         } else if (urlInfo.pathname === securityConfig.jwt.refresh_token.refresh_token_route) { // refresh token - new token
             if (isEmpty(req.refresh_token)) req.refresh_token = (!isEmpty(securityConfig.jwt.refresh_token.refresh_token_field)) ? query[securityConfig.jwt.refresh_token.refresh_token_field] || headers[securityConfig.jwt.refresh_token.refresh_token_field] || body[securityConfig.jwt.refresh_token.refresh_token_field] : null;
             //check if token is revoked
-            let tokensRevoked = await localStorage.getItem("tokenListRevoked") || {};
             let authData = verifyToken(req.refresh_token, refreshTokenEncryptionSecretKey);
-            if (isEmpty(tokensRevoked[req.refresh_token]) && authData) {
+            if (isEmpty(await revokedTokenStorage.getToken(req.refresh_token)) && authData) {
                 // generate new token
                 let response = {token: generateToken(authData)};
                 if (securityConfig.jwt.refresh_token.reset_refresh_token) {
@@ -258,18 +164,18 @@ async function security(req, res, next) {
 
                 // remove old token
                 if (securityConfig.jwt.remove_tokens_auth) {
-                    removeUserToken(authData.clientId, !securityConfig.jwt.refresh_token.reset_refresh_token);
+                    await userTokenStorage.removeToken(authData.clientId, !securityConfig.jwt.refresh_token.reset_refresh_token);
                 }
 
                 // save new token
-                saveUserToken(authData.clientId, response.token, req.refresh_token);
+                await userTokenStorage.addToken(authData.clientId, response.token, req.refresh_token, tokenExpires, refreshTokenExpires);
                 sendJson(res, response, 200);
             } else {
                 let err = new Error(cjs.i18n.__("Access denied. Invalid refresh token."), 403);
                 sendJson(res, err, 403);
             }
             // remove expired tokens
-            removeExpiredTokens();
+            await removeExpiredTokens();
         } else if (cjs.secBypassRoutes.contains(urlInfo.pathname.replaceAll("/",""))) next();
         else { // not bypassed
             //Check if bearer exists
@@ -292,16 +198,15 @@ async function security(req, res, next) {
                 sendJson(res, err, 403);
             } else { // verify token
                 //check if token is revoked
-                let tokensRevoked = await localStorage.getItem("tokenListRevoked") || {};
                 let authData = verifyToken(req.token);
-                if (isEmpty(tokensRevoked[req.token]) && authData) {
+                if (isEmpty(await revokedTokenStorage.getToken(req.token)) && authData) {
                     req.token_data = authData;
                     next();
                 } else {
                     let err = new Error(cjs.i18n.__("Access denied. Invalid token."), 403);
                     sendJson(res, err, 403);
                     // remove expired tokens
-                    removeExpiredTokens();
+                    await removeExpiredTokens();
                 }
             }
         }

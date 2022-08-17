@@ -10,7 +10,8 @@ const defaultController = '/product';
 const security = {...require("../../defaults.json").security};
 cjs.entityManager = require("../../base/entity-manager");
 const repositoryManager = require("../../base/repository-manager");
-const localStorage = require('../../base/localstorage');
+const userTokenStorage = require('../../base/security/tokens-user');
+const revokedTokenStorage = require('../../base/security/tokens-revoked');
 
 const defaultClientIdField = security.jwt.sign_client_id_field;
 const defaultClientSecretField = security.jwt.sign_client_secret_field;
@@ -53,8 +54,10 @@ describe('Testing security functions and configs with repository', function () {
         // security repository config
         cjs.config.security.security_entity = "access_credential";
         // security repository config
-        localStorage.default_options.type = "repository";
-        localStorage.default_options.entity = "access_storage";
+        userTokenStorage.type = "repository";
+        revokedTokenStorage.type = "repository";
+        userTokenStorage.entity = "access_storage";
+        revokedTokenStorage.entity = "revoked_storage";
 
         // init server
         try {

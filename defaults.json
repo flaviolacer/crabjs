@@ -29,9 +29,14 @@
   },
   "language": "en",
   "local_storage" : {
-      "type" : "file",
-      "filename" : "",
-      "path" : "localstorage"
+    "type" : "file",
+    "filename" : "",
+    "path" : "localstorage"
+  },
+  "token_storage" : {
+    "type" : "file",
+    "filename" : "",
+    "path" : "tokenstorage"
   },
   "cache_storage_path" : "cache"
 }

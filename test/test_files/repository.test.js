@@ -79,7 +79,7 @@ describe('Testing repository functions', function () {
                 {name: testProductItem.name, definition: "Test4"},
                 {name: testProductItem.name, definition: "Test5"},
             ];
-            em.insertBatch("product", arrayInsert);
+            await em.insertBatch("product", arrayInsert);
         } catch (e) {
             assert.fail("Failed to insert entities:" + e.message + e.stack);
         }

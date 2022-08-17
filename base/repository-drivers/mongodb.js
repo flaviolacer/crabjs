@@ -286,7 +286,7 @@ function mongoDB() {
                         });
                         resolve(ret);
                         return ret;
-                    } catch(e) {
+                    } catch (e) {
                         if (e.code === 66)
                             log.error(cjs.i18n.__("Error trying to save record on repository. Record id already exists?"));
                         else
@@ -364,6 +364,42 @@ function mongoDB() {
 
     this.isConnected = () => {
         return !!this.client && !!this.client.topology && this.client.topology.isConnected()
+    }
+
+    this.aggregate = (params) => {
+        let pipeline = params.pipeline || [];
+        let options = params.options || {};
+        let getcursor = params.getcursor ? params.getcursor : false;
+        let collectionName = params.collection || params.entity;
+
+        return new Promise(async (resolve, reject) => {
+            let db = await this.getDb();
+            if (!db) {
+                log.error(cjs.i18n.__("Cannot get entity {{entityName}}", {entityName: options.entity}));
+                return;
+            }
+
+            let curFind;
+            try {
+                curFind = db.collection(collectionName).aggregate(pipeline, options);
+            } catch (e) {
+                reject(e);
+                throw e;
+            }
+
+            if (getcursor)
+                resolve({cursor: curFind});
+            else {
+                let results;
+                try {
+                    results = await curFind.toArray();
+                } catch (e) {
+                    reject(e);
+                    throw e;
+                }
+                resolve({results: results});
+            }
+        });
     }
 }
 

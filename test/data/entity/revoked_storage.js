@@ -3,20 +3,17 @@ const cjs = require("../../../base/cjs");
 
 /**
  * @Entity
- * @RepositoryName('access_storage')
+ * @RepositoryName('revoked_storage')
  */
-function access_storage() {
+function revoked_storage() {
     /**
      * @field("_id")
      * @primaryKey
      **/
-    let client_id;
+    let token;
 
     /** @field */
-    let tokens;
-
-    /** @field */
-    let refreshTokens;
+    let data;
 
     this.removeExpired = async function () {
         let entityName = "revoked_storage";
@@ -55,7 +52,6 @@ function access_storage() {
             await md.remove({_id: expiredToken._id, definitions: entity.__definitions });
         }
     }
-
 }
 
-module.exports = access_storage;
+module.exports = revoked_storage;
