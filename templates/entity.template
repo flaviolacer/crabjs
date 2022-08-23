@@ -1,6 +1,5 @@
 /**
  * @Entity
- * @name = '{{name}}'
  */
 function {{name}}() {
      /** @field */

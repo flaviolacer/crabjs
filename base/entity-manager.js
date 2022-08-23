@@ -75,16 +75,35 @@ function entityManager() {
         let newEntityInstantiated = require(entityFilepath);
         if (newEntityInstantiated.constructor.name.toLowerCase() === "function") newEntityInstantiated = new newEntityInstantiated();
         // extend entitybase
-        let EntityBase = require('./entity-base');
+
+        let definitions  = getEntityDefinition(name);
+        let annotationMapKeys = Object.keys(definitions);
+        const entries = Object.entries(definitions.entity.data);
+        let headerAnnotationKeys =
+            entries.map(([key]) => {
+                return key.toLowerCase();
+            });
+
+        let EntityBase;
+        let customBaseLib = headerAnnotationKeys.contains("custom") || headerAnnotationKeys.contains("custombase");
+        if (customBaseLib) {
+            let customEntityPath = (headerAnnotationKeys.contains("custompath")) ? headerAnnotationKeys["custompath"] : path.join(config.server_entities_path,"custom");
+            try {
+                EntityBase = require(path.join(customEntityPath, customBaseLib + ".js"));
+            } catch(e) {
+                log.error(cjs.i18n.__('Error loading custom entity. Verify if file exists on: {{customBaseLib}} ', {customBaseLib: customBaseLib}));
+                return;
+            }
+        } else {
+            EntityBase = require('./entity-base');
+        }
+
         let entityBase = new EntityBase();
         newEntityInstantiated = extend(entityBase, newEntityInstantiated);
+        newEntityInstantiated.entityName = name;
 
         // load entity definitions
-        newEntityInstantiated.__definitions = getEntityDefinition(name);
-
-        // load entity info
-        newEntityInstantiated.entityName = name;
-        let annotationMapKeys = Object.keys(newEntityInstantiated.__definitions.entity.data);
+        newEntityInstantiated.__definitions = definitions;
 
         // map annotation entity properties to the object
         for (let i = 0, j = annotationMapKeys.length; i < j; i++)
