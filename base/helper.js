@@ -1,3 +1,6 @@
+// Variables
+global.__cjs_base_path = __dirname;
+
 // prototypes
 String.prototype.contains = function (it) {
     return this.toLowerCase().indexOfRegex(it.toLowerCase()) !== -1;

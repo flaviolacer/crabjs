@@ -83,13 +83,18 @@ function entityManager() {
             entries.map(([key]) => {
                 return key.toLowerCase();
             });
+        let headerAnnotations = Object.fromEntries(
+                entries.map(([key, value]) => {
+                    return [key.toLowerCase(), value];
+                }),
+            );
 
         let EntityBase;
         let customBaseLib = headerAnnotationKeys.contains("custom") || headerAnnotationKeys.contains("custombase");
         if (customBaseLib) {
             let customEntityPath = (headerAnnotationKeys.contains("custompath")) ? headerAnnotationKeys["custompath"] : path.join(config.server_entities_path,"custom");
             try {
-                EntityBase = require(path.join(customEntityPath, customBaseLib + ".js"));
+                EntityBase = require(path.join(customEntityPath, headerAnnotations["custom"] || headerAnnotations["custombase"] + ".js"));
             } catch(e) {
                 log.error(cjs.i18n.__('Error loading custom entity. Verify if file exists on: {{customBaseLib}} ', {customBaseLib: customBaseLib}));
                 return;
@@ -309,6 +314,11 @@ function entityManager() {
             }
             log.info(cjs.i18n.__("Retrieving entities from repository..."));
             let entityDefinitions = getEntityDefinition(entity);
+            if (isEmpty(entityDefinitions)) {
+                //log.error(cjs.i18n.__("No entity definitions found. Did you miss the "));
+                reject(null);
+                return;
+            }
 
             try {
                 let entities = await repositoryManager.find({

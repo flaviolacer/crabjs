@@ -112,8 +112,8 @@ describe('Testing repository functions', function () {
     it('Test custom entity base', async () => {
         try {
             // search for entities
-            let entities = await em.getEntities("product", {name: testProductItem.name});
-            assert.equal(entities.length, 0, "Failed on validation on get entities");
+            let saveRet = em.newEntity('product_custom');
+            assert.equal(saveRet.save(), "save", "Failed on validation on get entities");
         } catch (e) {
             assert.fail("Failed to get entity:" + e.message + e.stack);
         }

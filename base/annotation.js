@@ -30,7 +30,7 @@ function annotation() {
     }
 
     this.getAnnotations = (fileContent) => {
-        let annotationMainRegex = /(\/\*\*(([\s\n*@a-zA-Z0-9_=;'",():]*)|([\s\n*@a-zA-Z0-9_=;'",():\/]*))\*\/)(([a-zA-Z0-9_.=\s])*)/gm;
+        let annotationMainRegex = /(\/\*\*(([\s\n*@a-zA-Z0-9_\-=;'",():]*)|([\s\n*@a-zA-Z0-9_\-=;'",():\/]*))\*\/)(([a-zA-Z0-9_.=\s])*)/gm;
 
         let result = {
             classes: [],
