@@ -56,6 +56,26 @@ let removeExpiredTokens = async () => {
 };
 
 /**
+ * Generate token for request
+ */
+let generateRequestToken = async function (res, apiUserAuth) {
+    let response = {token: generateToken(apiUserAuth)};
+    // remove old token
+    if (securityConfig.jwt.remove_tokens_auth)
+        await userTokenStorage.removeToken(apiUserAuth.clientId);
+    // generate refreshToken
+    if (securityConfig.jwt.refresh_token)
+        response.refreshToken = generateToken(apiUserAuth, refreshTokenEncryptionSecretKey, refreshTokenExpires);
+    // save new token
+    await userTokenStorage.addToken(apiUserAuth.clientId, response.token, response.refreshToken, tokenExpires, refreshTokenExpires);
+
+    sendJson(res, response, 200);
+    // remove expired tokens
+    await removeExpiredTokens();
+}
+
+
+/**
  * Check security - currently, the is only jwt security
  * @param req
  * @param res
@@ -63,6 +83,7 @@ let removeExpiredTokens = async () => {
  */
 async function security(req, res, next) {
     if (cjs.config.security && cjs.config.security.jwt) {
+        let em = cjs.entityManager;
         if (!isEmpty(cjs.config.security))
             securityConfig = cjs.config.security;
 
@@ -120,7 +141,6 @@ async function security(req, res, next) {
                     apiUserAuth.clientSecret = testClientSecret;
                 }
             } else {
-                let em = cjs.entityManager;
                 let credentialSearchFields = {};
                 credentialSearchFields[securityConfig.jwt.sign_client_id_field] = testClientId;
                 credentialSearchFields[securityConfig.jwt.sign_client_secret_field] = testClientSecret;
@@ -133,22 +153,39 @@ async function security(req, res, next) {
 
             // do the authentication
             if (!isEmpty(apiUserAuth)) {
-                let response = {token: generateToken(apiUserAuth)};
-                // remove old token
-                if (securityConfig.jwt.remove_tokens_auth)
-                    await userTokenStorage.removeToken(apiUserAuth.clientId);
-                // generate refreshToken
-                if (securityConfig.jwt.refresh_token)
-                    response.refreshToken = generateToken(apiUserAuth, refreshTokenEncryptionSecretKey, refreshTokenExpires);
-                // save new token
-                await userTokenStorage.addToken(apiUserAuth.clientId, response.token, response.refreshToken, tokenExpires, refreshTokenExpires);
-
-                sendJson(res, response, 200);
-                // remove expired tokens
-                await removeExpiredTokens();
+                await generateRequestToken(res, apiUserAuth);
             } else {
                 let err = new Error(cjs.i18n.__('Access denied. Invalid credentials.'), 403);
                 sendJson(res, err, 403);
+            }
+        } else if ( securityConfig.auth_entity && securityConfig.auth_entity.route && urlInfo.pathname === securityConfig.auth_entity.route) { // auth entity
+            let ae = securityConfig.auth_entity;
+            let authLoginFields = {};
+            let testLoginValue = query[securityConfig.auth_entity_login_field] || body[securityConfig.auth_entity_login_field] || headers[securityConfig.auth_entity_login_field];
+            let testPasswordValue = query[securityConfig.auth_entity_password_field] || body[securityConfig.auth_entity_password_field] || headers[securityConfig.auth_entity_password_field];
+
+            if (isEmpty(testLoginValue) || isEmpty(testPasswordValue)) {
+                let err = new Error(cjs.i18n.__('Access denied. Invalid credentials.'), 403);
+                sendJson(res, err, 403);
+                return;
+            }
+
+            authLoginFields[ae[securityConfig.auth_entity_login_field]] = testLoginValue;
+
+            let credential = await em.getEntity(ae.name, authLoginFields);
+            if (isEmpty(credential))
+            {
+                let err = new Error(cjs.i18n.__('Access denied. Invalid credentials.'), 403);
+                sendJson(res, err, 403);
+                return;
+            }
+
+            let repoPassword = credential[ae[securityConfig.auth_entity_password_field]];
+            if (!verify_password(repoPassword, testPasswordValue)) {
+                let err = new Error(cjs.i18n.__('Access denied. Invalid credentials.'), 403);
+                sendJson(res, err, 403);
+            } else { // generate tokens
+                await generateRequestToken(res, authLoginFields);
             }
         } else if (urlInfo.pathname === securityConfig.jwt.refresh_token.refresh_token_route) { // refresh token - new token
             if (isEmpty(req.refresh_token)) req.refresh_token = (!isEmpty(securityConfig.jwt.refresh_token.refresh_token_field)) ? query[securityConfig.jwt.refresh_token.refresh_token_field] || headers[securityConfig.jwt.refresh_token.refresh_token_field] || body[securityConfig.jwt.refresh_token.refresh_token_field] : null;
@@ -176,7 +213,7 @@ async function security(req, res, next) {
             }
             // remove expired tokens
             await removeExpiredTokens();
-        } else if (cjs.secBypassRoutes.contains(urlInfo.pathname.replaceAll("/",""))) next();
+        } else if (cjs.secBypassRoutes.contains(urlInfo.pathname.replaceAll("/", ""))) next();
         else { // not bypassed
             //Check if bearer exists
             if (securityConfig.jwt.token_bearer) {

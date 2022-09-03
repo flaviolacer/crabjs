@@ -27,8 +27,6 @@
 	"Access denied. Invalid refresh token.": "Access denied. Invalid refresh token.",
 	"Access denied. Error on generating token.": "Access denied. Error on generating token.",
 	"Entity definition not found. Missing create it {{name}}?": "Entity definition not found. Missing create it {{name}}?",
-	"Cannot save entity in empty repository. No defalut repository is set": "Cannot save entity in empty repository. No defalut repository is set",
-	"Cannot save entity in empty repository. No defautt repository is set": "Cannot save entity in empty repository. No defautt repository is set",
 	"Could not retrive data from repository.": "Could not retrive data from repository.",
 	"Entity not defined on repository": "Entity not defined on repository",
 	"Entity not defined. Did you missed the file on directory?": "Entity not defined. Did you missed the file on directory?",
@@ -36,5 +34,8 @@
 	"Could not erase data from repository.": "Could not erase data from repository.",
 	"Could not retrieve data from repository.": "Could not retrieve data from repository.",
 	"Annotation \"@Entity\" not found on entity file \"{{name}}\"": "Annotation \"@Entity\" not found on entity file \"{{name}}\"",
-	"Error loading custom entity. Verify if file exists on: {{customBaseLib}} ": "Error loading custom entity. Verify if file exists on: {{customBaseLib}} "
+	"Error loading custom entity. Verify if file exists on: {{customBaseLib}} ": "Error loading custom entity. Verify if file exists on: {{customBaseLib}} ",
+	"Cannot save entity {{entityName}}": "Cannot save entity {{entityName}}",
+	"Cannot get entity {{entityName}}": "Cannot get entity {{entityName}}",
+	"Cannot find one data using repository \"{{options.repository}}\"": "Cannot find one data using repository \"{{options.repository}}\""
 }

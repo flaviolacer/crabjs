@@ -27,7 +27,9 @@
       }
     },
     "security_repository": false,
-    "security_entity": "__access_credential"
+    "security_entity": "__access_credential",
+    "auth_entity_login_field": "login",
+    "auth_entity_password_field": "password"
   },
   "language": "en",
   "local_storage": {

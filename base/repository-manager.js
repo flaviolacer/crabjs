@@ -10,7 +10,7 @@ class RepositoryManager {
     getConnection(repository) {
         repository = repository || (cjs.config.repository ? cjs.config.repository.default : null);
         if (isEmpty(repository)) {
-            log.error(cjs.i18n.__("Cannot save entity in empty repository. No defautt repository is set"));
+            log.error(cjs.i18n.__("Cannot save entity in empty repository. No default repository is set"));
             return;
         }
 

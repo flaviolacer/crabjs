@@ -101,3 +101,52 @@ global.snakeToCamelCase = str =>
 global.lowerFirstLetter = string => {
     return string.charAt(0).toLowerCase() + string.slice(1);
 }
+
+global.crypto = require('crypto');
+global.hashHmac = function (text) {
+    return crypto.createHmac('sha256', 'fgdgdfgcvbcvbvcbcv#')
+        .update(text)
+        .digest('hex');
+};
+
+global.verify_password = function (dbString, password) {
+    if (isEmpty(dbString))
+        return false;
+    let pieces = dbString.split('$');
+    let crypt_info = pieces[0].split("_");
+
+    let iterations = parseInt(pieces[1]);
+    let salt = pieces[2];
+    let old_hash = pieces[3];
+    let hashLength = (Buffer.from(old_hash, "base64")).length;
+    let keybase = false;
+
+    crypto.pbkdf2(password, salt, iterations, hashLength, crypt_info[1], function (err, key) {
+        if (err)
+            throw err;
+        keybase = key.toString('base64');
+    });
+
+    require('deasync').loopWhile(function () {
+        return !keybase;
+    });
+
+    return (keybase === old_hash);
+};
+
+global.encrypt_password = function (password) {
+    let salt = crypto.randomBytes(32).toString('base64').substr(0,12);
+    let iterations = 10000;
+    let keybase = false;
+
+
+    crypto.pbkdf2(password, salt, iterations, 32, 'sha256', function (err, key) {
+        keybase = 'pbkdf2_sha256$10000$' + salt + '$' + key.toString('base64');
+    });
+
+    require('deasync').loopWhile(function () {
+        return !keybase;
+    });
+
+    return keybase;
+};

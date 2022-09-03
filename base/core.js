@@ -116,6 +116,13 @@ function core() {
         expressInstance.engine('html', ejs.renderFile);
         expressInstance.set('view engine', 'html');
         // middlewares
+        let bodyParser = require('body-parser');
+
+        // configure the app to use bodyParser()
+        expressInstance.use(bodyParser.urlencoded({
+            extended: true
+        }));
+        expressInstance.use(bodyParser.json());
         //expressInstance.use(logger('Response time\: :response-time\\n'));
         // catch not found
         // start server
