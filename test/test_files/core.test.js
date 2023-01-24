@@ -3,6 +3,8 @@ let cjs = require('../../base/cjs');
 cjs.config = { ... require("../../defaults.json") };
 cjs.config.app_root = __dirname;
 cjs.config.hide_start_log = true;
+// set entity directory
+cjs.config.server_entities_path = "../data/entity";
 const core = require('../../base/core');
 cjs.i18n = core.loadLocales();
 const assert = require('assert');

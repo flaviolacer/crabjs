@@ -40,9 +40,11 @@ function mongoDB() {
                 try {
                     return new MongoDB.ObjectId(value);
                 } catch (e) {
-                    log.error(cjs.i18n.__("Error on converting ObjectId Field: '{{value}}'", value));
+                    log.error(cjs.i18n.__("Error on converting ObjectId Field: '{{value}}'", {value: value}));
                     throw new Error(e);
                 }
+            case "password":
+                return encrypt_password(value);
             case "datetime":
             case "date":
                 return new Date(value);
@@ -130,16 +132,24 @@ function mongoDB() {
             const found = pipeline.some(fi => !isEmpty(fi.$match));
             if (!found) pipeline.push({$match: filter});
 
+            // create pipeline for count
+            let pipeline_count = pipeline.clone();
+            pipeline_count.push({"$count": "count"});
+
             // pagination
             if (options.page_number && options.page_size) {
                 pipeline.push({$skip: (options.page_number - 1) * options.page_size});
                 pipeline.push({$limit: options.page_size});
             }
 
+            let aggregate_options = {collation: {locale: "pt"}, allowDiskUse: true};
+
             let collectionName = options.definitions.entity.data.RepositoryName || options.entity;
             let res_cursor;
+            let record_count_cursor;
             try {
-                res_cursor = await instance.db.collection(collectionName).aggregate(pipeline, {allowDiskUse: true});
+                record_count_cursor = await (await instance.db.collection(collectionName).aggregate(pipeline_count, aggregate_options)).next();
+                res_cursor = await instance.db.collection(collectionName).aggregate(pipeline, aggregate_options);
             } catch (e) {
                 reject(e);
                 return;
@@ -154,11 +164,19 @@ function mongoDB() {
                 log.info('info-aggregate-params:' + JSON.stringify(pipeline));
                 //log.info("info-aggregate-" + collectionName, results);
 
+                let returnContent = {
+                    totalRecords: ((!isEmpty(record_count_cursor)) ? record_count_cursor.count : 0),
+                    records: []
+                };
                 if (!isEmpty(results)) {
-                    if (options.one) resolve(results[0]); else resolve(results);
-                } else {
-                    resolve([]);
+                    if (options.one)
+                        resolve(results[0]);
+                    else {
+                        returnContent.records = results;
+                        resolve(returnContent);
+                    }
                 }
+                resolve(returnContent);
             });
         });
     };
@@ -193,6 +211,8 @@ function mongoDB() {
 
     this.save = (options) => {
         let entity = options.entity;
+        let fields = entity.__definitions.fields;
+
         // conditions on insert
         let filter = options.filter || {};
         return new Promise(async (resolve) => {
@@ -208,14 +228,13 @@ function mongoDB() {
                     let fieldRef = Pks[i].fname;
                     let fieldName = (isEmpty(Pks[i].data.field)) ? Pks[i].fname : Pks[i].data.field;
                     primaryKeyExists = true;
-                    if (!isEmpty(entity[fieldRef]) || MongoDB.ObjectId.isValid(entity[fieldRef])) filter[fieldName] = entity[fieldRef];
+                    if (!isEmpty(entity[fieldRef]) || MongoDB.ObjectId.isValid(entity[fieldRef])) filter[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
                 }
             }
 
             // prepare data to save
             let fieldsKeys = Object.keys(entity.__definitions.fields);
-            let fields = entity.__definitions.fields;
-            let entityPersist = {};
+            let entityPersistInfo = {};
             for (let i = 0, j = fieldsKeys.length; i < j; i++) {
                 let fieldRef = fieldsKeys[i];
                 let fieldName = (isEmpty(fields[fieldRef].field)) ? fieldRef : fields[fieldRef].field;
@@ -228,7 +247,7 @@ function mongoDB() {
                 }
 
                 try {
-                    if (!isEmpty(entity[fieldRef])) entityPersist[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
+                    if (!isEmpty(entity[fieldRef])) entityPersistInfo[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
                 } catch (e) {
                     log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field.", {entityName: entity.entityName}));
                     resolve(false);
@@ -236,7 +255,7 @@ function mongoDB() {
                 }
             }
 
-            if (isEmpty(entityPersist)) {
+            if (isEmpty(entityPersistInfo)) {
                 log.error(cjs.i18n.__("No infomation sent to save entity \"{{entityName}}\"", {entityName: entity.entityName}));
                 resolve(false)
                 return;
@@ -244,12 +263,12 @@ function mongoDB() {
 
             let collectionName = entity.__definitions.entity.data.RepositoryName || entity.entityName;
             if (isEmpty(filter)) { // insert data
-                if (isEmpty(entityPersist)) {
+                if (isEmpty(entityPersistInfo)) {
                     resolve(false);
                     return;
                 }
                 // insert data
-                await db.collection(collectionName).insertOne(entityPersist, {
+                await db.collection(collectionName).insertOne(entityPersistInfo, {
                     writeConcern: {
                         w: 1, j: true
                     }
@@ -266,8 +285,9 @@ function mongoDB() {
                 convertFieldsToTypeDefinitions(filter, entity.__definitions);
 
                 // persist data and return the modified
-                if (options.forceUpdate)
-                    await db.collection(collectionName).updateMany(filter, entityPersist, {
+                if (filter.__update_multiple) {
+                    delete filter.__update_multiple;
+                    await db.collection(collectionName).updateMany(filter, {$set: entityPersistInfo}, {
                         writeConcern: {
                             w: 1,
                             j: true
@@ -279,12 +299,12 @@ function mongoDB() {
                         resolve(entity);
                         return true;
                     });
-                else
+                } else
                     try {
-                        let ret = await db.collection(collectionName).findOneAndUpdate(filter, {$set: entityPersist}, {
+                        let ret = await db.collection(collectionName).findOneAndUpdate(filter, {$set: entityPersistInfo}, {
                             upsert: true, returnNewDocument: true
                         });
-                        resolve(ret);
+                        resolve(ret.value);
                         return ret;
                     } catch (e) {
                         if (e.code === 66)
@@ -324,6 +344,7 @@ function mongoDB() {
                 log.info(cjs.i18n.__("Not removing entities {{entityName}}. No filter set.", {entityName: entity.entityName}));
                 resolve(false);
             } else {
+                delete filter.__force_delete;
                 // convert field names
                 convertFieldsToTypeDefinitions(filter, definitions);
 
@@ -341,8 +362,8 @@ function mongoDB() {
                     } else
                         log.error(e);
                     resolve(false);
-                }).then(() => {
-                    resolve(true);
+                }).then((data) => {
+                    resolve(data);
                 });
             }
         });
@@ -352,10 +373,9 @@ function mongoDB() {
         let db = await this.getDb();
         if (!db) {
             log.error(cjs.i18n.__("Cannot insert {{entityName}}", {entityName: options.entity}));
-            resolve(false);
             return;
         }
-        await db.collection(options.entity).insertMany(options.data);
+        return await db.collection(options.entity).insertMany(options.data);
     };
 
     this.close = async () => {

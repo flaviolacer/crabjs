@@ -1,6 +1,7 @@
 const path = require("path");
 const express = require('express');
 const http = require("http");
+const https = require("https");
 const log = require("./log");
 let cjs = require("./cjs");
 const fs = require("fs");
@@ -22,7 +23,34 @@ function core() {
     this.startServer = () => {
         let port = normalizePort(cjs.config.server_port || process.env.SERVER_PORT || '3000');
         expressInstance.set('port', port);
-        this.server = http.createServer(expressInstance);
+        if (cjs.config.server_https) {
+            if (isEmpty(cjs.config.server_certificate_key) || isEmpty(cjs.config.server_certificate_file)) {
+                log.error(cjs.i18n.__('You must specify certificate key and file to use https server.'));
+                return;
+            }
+            if (!cjs.config.server_certificate_key.startsWith("/"))
+                cjs.config.server_certificate_key = path.join(cjs.config.app_root, cjs.config.server_certificate_key);
+            if (!cjs.config.server_certificate_file.startsWith("/"))
+                cjs.config.server_certificate_file = path.join(cjs.config.app_root, cjs.config.server_certificate_file);
+
+            if (!fs.existsSync(cjs.config.server_certificate_key) || !fs.existsSync(cjs.config.server_certificate_file)) {
+                log.error(cjs.i18n.__('One of the certification files does not exists.'));
+                return;
+            }
+
+            try {
+                let https_options = {
+                    key: fs.readFileSync(cjs.config.server_certificate_key),
+                    cert: fs.readFileSync(cjs.config.server_certificate_file)
+                }
+                this.server = https.createServer(https_options, expressInstance);
+            } catch (e) {
+                log.error(cjs.i18n.__('Error trying to start server. Verify certification files.'));
+                log.error(e);
+                return;
+            }
+        } else
+            this.server = http.createServer(expressInstance);
         // set default timeout
         this.server.setTimeout(cjs.config.server_timeout);
         /**
@@ -88,7 +116,9 @@ function core() {
                 : addr.port;
             let host = addr.address;
             let localAddresses = ['::','127.0.0.1'];
-            host = (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
+            host = (!isEmpty(cjs.config.server_hostname)) ? "http://" + cjs.config.server_hostname : (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
+            if (cjs.config.server_https)
+                host = host.replace("http","https");
 
             if (!cjs.config.hide_start_log) {
                 log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------');

@@ -38,6 +38,10 @@ global.containsObjectKey = function (obj, k, key) {
     return false;
 };
 
+Array.prototype.clone = function() {
+    return this.slice(0);
+};
+
 //global functions
 global.isEmpty = function (obj) {
     return ((typeof obj === 'undefined' || obj === null || obj === '') || (isArray(obj) && (obj.length === 0) && Object.keys(obj).length === 0) || (isObject(obj) && (Object.keys(obj).length === 0 && obj.constructor === Object)));
@@ -57,7 +61,7 @@ global.isString = function(s) {
 };
 
 global.isObject = function(obj) {
-    return typeof obj === 'object' && !(obj instanceof Array)
+    return typeof obj === 'object' && !(obj instanceof Array) && obj !== null
 };
 
 global.isDate = function(obj) {

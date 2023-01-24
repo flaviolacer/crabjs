@@ -61,6 +61,17 @@ describe('Testing repository functions', function () {
             assert.fail("Failed to get entity:" + e.message + e.stack);
         }
     });
+    it('Test update entity in repository', async () => {
+        try {
+            let testProduct = await em.getEntity("product", {_id: testProductItem._id});
+            testProduct.name = "test2";
+            testProduct.save();
+            assert.ok(testProduct);
+
+        } catch (e) {
+            assert.fail("Failed to update entity:" + e.message + e.stack);
+        }
+    });
     it('Test remove entity from repository', async () => {
         try {
             let testProduct = await em.getEntity("product", {_id: testProductItem._id});
@@ -84,11 +95,11 @@ describe('Testing repository functions', function () {
             assert.fail("Failed to insert entities:" + e.message + e.stack);
         }
     });
-    it('Test to get entities in repository', async () => {
+    it('Test to get entities from repository', async () => {
         try {
             // search for entities
             let entities = await em.getEntities("product", {name: testProductItem.name});
-            assert.equal(entities.length, 5, "Failed on validation on get entities");
+            assert.equal(entities.totalRecords, 5, "Failed on validation on get entities");
         } catch (e) {
             assert.fail("Failed to get entities:" + e.message + e.stack);
         }
@@ -104,7 +115,7 @@ describe('Testing repository functions', function () {
         try {
             // search for entities
             let entities = await em.getEntities("product", {name: testProductItem.name});
-            assert.equal(entities.length, 0, "Failed on validation on get entities");
+            assert.equal(entities.totalRecords, 0, "Failed on validation on get entities");
         } catch (e) {
             assert.fail("Failed to get entity:" + e.message + e.stack);
         }

@@ -43,13 +43,13 @@ class RepositoryManager {
     async remove(options) {
         options.__errorMessage = "Cannot remove entity \"{{entityName}}\", connection not found.";
         options.__command = "remove";
-        await this.sendCommand(options);
+        return await this.sendCommand(options);
     }
 
     async insertBatch(options) {
         options.__errorMessage = "Cannot save batch using repository \"{{repository}}\"";
         options.__command = "insertBatch";
-        await this.sendCommand(options);
+        return await this.sendCommand(options);
     }
 
     async sendCommand(options) {

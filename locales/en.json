@@ -37,5 +37,11 @@
 	"Error loading custom entity. Verify if file exists on: {{customBaseLib}} ": "Error loading custom entity. Verify if file exists on: {{customBaseLib}} ",
 	"Cannot save entity {{entityName}}": "Cannot save entity {{entityName}}",
 	"Cannot get entity {{entityName}}": "Cannot get entity {{entityName}}",
-	"Cannot find one data using repository \"{{options.repository}}\"": "Cannot find one data using repository \"{{options.repository}}\""
+	"Cannot find one data using repository \"{{options.repository}}\"": "Cannot find one data using repository \"{{options.repository}}\"",
+	"You must specify certificate key and file to use https server.": "You must specify certificate key and file to use https server.",
+	"Error trying to start server. Verify certification files.": "Error trying to start server. Verify certification files.",
+	"One of the certification files does not exists.": "One of the certification files does not exists.",
+	"Entity \"{{entity}}\" not found on association to controller \"{{controller}}\". Missing entity on dir?": "Entity \"{{entity}}\" not found on association to controller \"{{controller}}\". Missing entity on dir?",
+	"Need to specify the filter to return the entity.": "Need to specify the filter to return the entity.",
+	"Entity \"{{entityName}}\" removed": "Entity \"{{entityName}}\" removed"
 }

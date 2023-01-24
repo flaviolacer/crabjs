@@ -19,7 +19,7 @@ function Util() {
             try {
                 fs.mkdirSync(this.cachePath);
             } catch (e) {
-               log.error(e);
+                log.error(e);
             }
     }
 
@@ -37,6 +37,37 @@ function Util() {
         }
         return nonce;
     };
+
+    this.responseError = function (res, message, code) {
+        let ResponseError = require("./response-error");
+        let responseError = new ResponseError(message, code);
+        responseError.type = "error";
+        res.send(responseError);
+    }
+
+    function cleanEntity(data) {
+        delete data.__definitions;
+        delete data.entity;
+    }
+
+    this.responseData = function (res, content, params) {
+        let response = {
+            content: content
+        };
+
+        if (isObject(content)) {
+            // check if is entity and remove unecessary fields
+            if (content.entityName)
+                cleanEntity(content);
+
+            response["content"] = content;
+
+            if (!isEmpty(params))
+                response = extend(response, params);
+            res.send(response);
+        } else
+            res.send(response);
+    }
 }
 
 module.exports = new Util();

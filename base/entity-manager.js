@@ -71,7 +71,7 @@ function entityManager() {
                 return;
             }
         }
-        // create entity and extend is to base
+        // create entity and extend it to base
         let newEntityInstantiated = require(entityFilepath);
         if (newEntityInstantiated.constructor.name.toLowerCase() === "function") newEntityInstantiated = new newEntityInstantiated();
         // extend entitybase
@@ -227,12 +227,12 @@ function entityManager() {
             data = [data];
         return new Promise(async (resolve) => {
             let entityDefinitions = getEntityDefinition(entity);
-            await repositoryManager.insertBatch({
+            let retInsertBatch = await repositoryManager.insertBatch({
                 repository: entityDefinitions.entity.repository,
                 entity: entityDefinitions.entity.data.RepositoryName || entity,
                 data: data
             });
-            resolve();
+            resolve(retInsertBatch);
         });
     };
 
@@ -243,6 +243,10 @@ function entityManager() {
      * @returns {Promise<unknown>}
      */
     this.getEntity = (entity, filter) => {
+        // convert array to object
+        if (isArray(filter))
+            filter = Object.assign({}, filter);
+
         return new Promise(async (resolve, reject) => {
             if (isEmpty(entity)) {
                 log.error(cjs.i18n.__("Need to specify the entity to load data."));
@@ -306,12 +310,6 @@ function entityManager() {
                 return;
             }
 
-            if (isEmpty(filter)) {
-                log.error(cjs.i18n.__("Need to specify the filter to return the entity."));
-                log.trace("error");
-                resolve(null);
-                return;
-            }
             log.info(cjs.i18n.__("Retrieving entities from repository..."));
             let entityDefinitions = getEntityDefinition(entity);
             if (isEmpty(entityDefinitions)) {
@@ -325,7 +323,9 @@ function entityManager() {
                     repository: entityDefinitions.entity.repository,
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
-                    filter: filter
+                    filter: filter,
+                    page_size : options.page_size || config.repository_page_size || 10,
+                    page_number: options.page_number || 1
                 });
 
                 if (entities) {
@@ -334,10 +334,11 @@ function entityManager() {
                         resolve(entities)
                     else {
                         let returnData = [];
-                        for(let i = 0,j = entities.length;i<j;i++) { // converting data
-                            returnData.push(this.newEntity(entity, entities[i]));
+                        for(let i = 0,j = entities.records.length;i<j;i++) { // converting data
+                            returnData.push(this.newEntity(entity, entities.records[i]));
                         }
-                        resolve(returnData);
+                        entities.records = returnData;
+                        resolve(entities);
                     }
                 } else {
                     log.info("Entities not found");
@@ -382,19 +383,17 @@ function entityManager() {
                     filter: filter
                 });
 
-                if (response) {
-                    log.info("Data removed", entityData);
-                    resolve(this.newEntity(entity, entityData));
-                } else {
-                    log.info("Entities not remove");
-                    resolve(null);
-                }
+                if (response)
+                    log.info("Data removed");
+                 else
+                    log.info("Entities not removed");
+
+                resolve(response);
             } catch (e) {
                 log.error(cjs.i18n.__("Could not erase data from repository."));
                 log.error(e);
                 reject(e);
             }
-
         });
     }
 }
