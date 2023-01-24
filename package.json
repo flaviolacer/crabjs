@@ -1,6 +1,6 @@
 {
   "name": "crabjs",
-  "version": "0.0.9",
+  "version": "1.0.0",
   "bin": {
     "cjs": "./cli/run.js"
   },
@@ -15,7 +15,8 @@
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^4.13.0",
     "morgan": "^1.10.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "mocha": "^10.2.0"
   },
   "keywords": [
     "api",
