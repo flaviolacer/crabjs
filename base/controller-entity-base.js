@@ -1,5 +1,6 @@
 const cjs = require("./cjs");
 const utils = require('./utils');
+const Constants = require("./constants");
 
 function ControllerEntityBase() {
     /**
@@ -35,12 +36,35 @@ function ControllerEntityBase() {
                     }
 
                     record = await newProduct.save(options);
+                    if (record.error) {
+                        let errorMessage;
+                        switch (record.error_code) {
+                            case Constants.REQUIRED_FIELD_ERROR:
+                                errorMessage = "Missing required fields.";
+                                break;
+                            case Constants.FIELD_VALUE_ERROR:
+                                errorMessage = "Check the field values.";
+                                break;
+                            case Constants.EMPTY_CONTENT_ERROR:
+                                errorMessage = "Check the information sent. Please verify that there is the correct fields with values.";
+                                break;
+                            default:
+                        }
+                        utils.responseError(res, cjs.i18n.__('Error on insert or update object. {{saveErrorMessage}}', {
+                            saveErrorMessage: errorMessage
+                        }), 406);
+                        return;
+                    }
                 }
             } else {
                 record = await em.insertBatch(this.__entity.entityName, req.body);
             }
+            utils.responseData(res, record);
+        } else {
+            utils.responseError(res, cjs.i18n.__('Error on update object. No defined body to save on entity: {{entityName}}', {
+                entityName: this.__entity.entityName
+            }), 406);
         }
-        utils.responseData(res, record);
     };
 
     /**

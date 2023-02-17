@@ -1,9 +1,15 @@
 const cjs = require("./cjs");
 const log = require('./log');
+const Constants = require("./constants");
 
 /**
  * Repository manager
+ *
+ * Error codes:
+ * 2 - connection error
+ * 5 - required field was not set
  */
+
 class RepositoryManager {
     static connections = [];
 
@@ -61,7 +67,11 @@ class RepositoryManager {
                 repository: repository,
                 entityName: (options.entity) ? options.entity.entityName : null
             }));
-            return false
+            return {
+                error: true,
+                error_message: options.__errorMessage,
+                error_code: Constants.CONNECTION_ERROR
+            }
         }
         return await conn[options.__command](options);
     }

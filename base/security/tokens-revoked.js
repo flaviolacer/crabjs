@@ -107,7 +107,10 @@ class tokensRevoked {
      **/
     async addToken(clientId, data) {
         let repository = this.getRepository();
-        await repository.save(clientId, data.token, {"date": data.date, expires: data.expires});
+        let tokens = Object.keys(data) || [];
+        await tokens.forEach(async function (token) {
+            await repository.save(clientId, token, {"date": data[token].date, expires: data[token].expires});
+        });
     }
 
     getToken(key) {

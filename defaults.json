@@ -14,7 +14,7 @@
       "token_field": "access_token",
       "sign_client_id_field": "client_id",
       "sign_client_secret_field": "client_secret",
-      "token_bearer": true,
+      "header_authentication": true,
       "token_expires": 300,
       "token_replace_new": true,
       "remove_tokens_auth": true,
@@ -28,9 +28,7 @@
       }
     },
     "security_repository": false,
-    "security_entity": "__access_credential",
-    "auth_entity_login_field": "login",
-    "auth_entity_password_field": "password"
+    "security_entity": "__access_credential"
   },
   "language": "en",
   "local_storage": {
@@ -47,5 +45,10 @@
   "server_certificate_key" : "",
   "server_certificate_file" : "",
   "application_prefix" : "",
-  "repository_page_size" : 10
+  "repository_page_size" : 10,
+  "swagger" : {
+    "enabled" : true,
+    "path" : "/api-docs/",
+    "info" : {}
+  }
 }

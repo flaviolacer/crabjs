@@ -87,7 +87,7 @@ describe('Testing security functions and configs with repository', function () {
             config.headers[defaultClientIdField] = securityCredentials[defaultClientIdField];
             config.headers[defaultClientSecretField] = securityCredentials[defaultClientSecretField];
             let response = await axios.get(defaultUrl + defaultTokenSignInRoute, config);
-            assert.ok(response.data.hasOwnProperty('token') && response.data.hasOwnProperty('refreshToken'));
+            assert.ok(response.data.hasOwnProperty(defaultTokenField) && response.data.hasOwnProperty(defaultRefreshTokenField));
             authInfoGenerated = response.data;
         } catch (e) {
             assert.fail("Failed request using method 'GET':" + e.message);
@@ -99,7 +99,7 @@ describe('Testing security functions and configs with repository', function () {
             let config = {
                 headers: {}
             };
-            config.headers[defaultTokenField] = authInfoGenerated.token;
+            config.headers[defaultTokenField] = authInfoGenerated[defaultTokenField];
             let response = await axios.get(defaultUrl + defaultController + "/", config);
             assert.equal(response.data, "ok", "Failed request using method 'GET'. Different response returned.")
         } catch (e) {
@@ -111,7 +111,7 @@ describe('Testing security functions and configs with repository', function () {
             // set config credentials access
             let config = {
                 headers: {
-                    "authorization": "Bearer " + authInfoGenerated.token
+                    "authorization": "Bearer " + authInfoGenerated[defaultTokenField]
                 }
             };
             let response = await axios.get(defaultUrl + defaultController + "/", config);
@@ -134,9 +134,9 @@ describe('Testing security functions and configs with repository', function () {
             let config = {
                 headers: {}
             };
-            config.headers[defaultRefreshTokenField] = authInfoGenerated.refreshToken;
+            config.headers[defaultRefreshTokenField] = authInfoGenerated[defaultRefreshTokenField];
             let response = await axios.get(defaultUrl + defaultRefreshTokenRoute, config);
-            assert.ok(response.data.hasOwnProperty('token') && response.data.hasOwnProperty('refreshToken'));
+            assert.ok(response.data.hasOwnProperty(defaultTokenField) && response.data.hasOwnProperty(defaultRefreshTokenField));
             authInfoGenerated = response.data;
         } catch (e) {
             assert.fail("Failed request using method 'GET':" + e.message);

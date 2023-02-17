@@ -1,0 +1,30 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "{{title}}",
+    "description": "{{description}}",
+    "version": "{{version}}"
+  },
+  "servers": [
+    {
+      "url": "{{apiServerAddress}}"
+    }
+  ],
+  "paths": {
+  },
+  "components": {
+    "securitySchemes": {
+      "apiauth": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "tokenUrl": "{{authorizationUrl}}",
+            "scopes": {
+              "default": "default"
+            }
+          }
+        }
+      }
+    }
+  }
+}

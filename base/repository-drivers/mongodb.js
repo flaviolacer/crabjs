@@ -1,8 +1,9 @@
 const log = require('../log');
 let cjs = require("../cjs");
 
-let MongoDB = require('mongodb');
-let Error = require("../error")
+const MongoDB = require('mongodb');
+const Error = require("../error");
+const Constants = require("../constants");
 
 function mongoDB() {
     let instance = this;
@@ -10,7 +11,12 @@ function mongoDB() {
     this.client = null;
 
     let default_options = {
-        "maxPoolSize": 10, "wtimeoutMS": 2500, "useNewUrlParser": true, "useUnifiedTopology": true
+        maxPoolSize: 10,
+        wtimeoutMS: 2500,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        connectTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 5000
     };
 
     let convertFieldsToTypeDefinitions = (fields, definitions) => {
@@ -99,13 +105,13 @@ function mongoDB() {
             params.options = params.options || {};
             extend(params.options, default_options);
 
-            MongoDB.MongoClient.connect(connUri, params.options, function (err, client) {
-                if (err) {
-                    reject(err);
-                } else {
+            MongoDB.MongoClient.connect(connUri, params.options).then(
+                function (client) {
                     // set collection
                     resolve(client);
                 }
+            ).catch(function (err) {
+                reject(err);
             });
         });
     };
@@ -155,12 +161,7 @@ function mongoDB() {
                 return;
             }
 
-            res_cursor.toArray(async function (errTo, results) {
-                if (errTo) {
-                    reject(errTo);
-                    return;
-                }
-
+            res_cursor.toArray().then(async function (results) {
                 log.info('info-aggregate-params:' + JSON.stringify(pipeline));
                 //log.info("info-aggregate-" + collectionName, results);
 
@@ -177,6 +178,9 @@ function mongoDB() {
                     }
                 }
                 resolve(returnContent);
+                return returnContent;
+            }).catch(function (errTo) {
+                reject(errTo);
             });
         });
     };
@@ -219,7 +223,11 @@ function mongoDB() {
             let db = await this.getDb();
             if (!db) {
                 log.error(cjs.i18n.__("Cannot save entity {{entityName}}", {entityName: entity.entityName}));
-                resolve(false);
+                resolve({
+                    error: true,
+                    error_message: cjs.i18n.__("Cannot save entity {{entityName}}", {entityName: entity.entityName}),
+                    error_code: Constants.CONNECTION_ERROR
+                });
                 return;
             }
             if (isEmpty(filter)) { // check if there is primaryKey(s) set
@@ -227,7 +235,6 @@ function mongoDB() {
                 for (let i = 0, j = Pks.length; i < j; i++) {
                     let fieldRef = Pks[i].fname;
                     let fieldName = (isEmpty(Pks[i].data.field)) ? Pks[i].fname : Pks[i].data.field;
-                    primaryKeyExists = true;
                     if (!isEmpty(entity[fieldRef]) || MongoDB.ObjectId.isValid(entity[fieldRef])) filter[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
                 }
             }
@@ -242,7 +249,13 @@ function mongoDB() {
                     log.error(cjs.i18n.__("Required field \"{{fieldName}}\" was not set on entity \"{{entityName}}\"", {
                         fieldName: fieldName, entityName: entity.entityName
                     }));
-                    resolve(false);
+                    resolve({
+                        error: true,
+                        error_message: cjs.i18n.__("Required field \"{{fieldName}}\" was not set on entity \"{{entityName}}\"", {
+                            fieldName: fieldName, entityName: entity.entityName
+                        }),
+                        error_code: Constants.REQUIRED_FIELD_ERROR
+                    });
                     return;
                 }
 
@@ -250,21 +263,33 @@ function mongoDB() {
                     if (!isEmpty(entity[fieldRef])) entityPersistInfo[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
                 } catch (e) {
                     log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field.", {entityName: entity.entityName}));
-                    resolve(false);
+                    resolve({
+                        error: true,
+                        error_message: cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field.", {entityName: entity.entityName}),
+                        error_code: Constants.FIELD_VALUE_ERROR
+                    });
                     return;
                 }
             }
 
             if (isEmpty(entityPersistInfo)) {
                 log.error(cjs.i18n.__("No infomation sent to save entity \"{{entityName}}\"", {entityName: entity.entityName}));
-                resolve(false)
+                resolve({
+                    error: true,
+                    error_message: cjs.i18n.__("No infomation sent to save entity \"{{entityName}}\"", {entityName: entity.entityName}),
+                    error_code: Constants.EMPTY_CONTENT_ERROR
+                })
                 return;
             }
 
             let collectionName = entity.__definitions.entity.data.RepositoryName || entity.entityName;
             if (isEmpty(filter)) { // insert data
                 if (isEmpty(entityPersistInfo)) {
-                    resolve(false);
+                    resolve({
+                        error: true,
+                        error_message: cjs.i18n.__("No infomation aquired from entity \"{{entityName}}\"", {entityName: entity.entityName}),
+                        error_code: Constants.UNDEFINED_ERROR
+                    });
                     return;
                 }
                 // insert data
@@ -274,7 +299,11 @@ function mongoDB() {
                     }
                 }).catch((e) => {
                     log.error(e);
-                    resolve(false);
+                    resolve({
+                        error: true,
+                        error_message: cjs.i18n.__("Undefined error on trying to insert entity \"{{entityName}}\"", {entityName: entity.entityName}),
+                        error_code: Constants.UNDEFINED_ERROR
+                    });
                 }).then((obj) => {
                     // for best practices with mongodb, set _id for the document
                     entity._id = obj.insertedId;
@@ -294,7 +323,11 @@ function mongoDB() {
                         }
                     }).catch((e) => {
                         log.error(e);
-                        resolve(false);
+                        resolve({
+                            error: true,
+                            error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: entity.entityName}),
+                            error_code: Constants.UNDEFINED_ERROR
+                        });
                     }).then(() => {
                         resolve(entity);
                         return true;
@@ -311,7 +344,11 @@ function mongoDB() {
                             log.error(cjs.i18n.__("Error trying to save record on repository. Record id already exists?"));
                         else
                             log.error(e);
-                        resolve(false);
+                        resolve({
+                            error: true,
+                            error_message: cjs.i18n.__("Undefined error on trying to find and update entity \"{{entityName}}\"", {entityName: entity.entityName}),
+                            error_code: Constants.UNDEFINED_ERROR
+                        });
                     }
             }
         });
@@ -334,7 +371,6 @@ function mongoDB() {
                 for (let i = 0, j = Pks.length; i < j; i++) {
                     let fieldRef = Pks[i].fname;
                     let fieldName = (isEmpty(Pks[i].data.field)) ? Pks[i].fname : Pks[i].data.field;
-                    primaryKeyExists = true;
                     if (!isEmpty(entity[fieldRef]) || MongoDB.ObjectId.isValid(entity[fieldRef])) filter[fieldName] = entity[fieldRef];
                 }
             }

@@ -4,6 +4,8 @@ const log = require('./log');
 const annotation = require('./annotation');
 const Error = require("./error");
 const cjs = require("./cjs");
+const swagger = require("./swagger");
+const utils = require("./utils");
 
 function routerManager() {
     let instance = this;
@@ -13,6 +15,7 @@ function routerManager() {
      * @param core
      */
     this.init = (core) => {
+        let rawControllerPath = config.server_controllers_path;
         if (isEmpty(config.server_controllers_path) || config.server_controllers_path.startsWith('.') || !config.server_controllers_path.startsWith('/'))
             cjs.config.server_controllers_path = path.join(config.app_root, config.server_controllers_path);
 
@@ -21,6 +24,7 @@ function routerManager() {
                 if (err) {
                     log.error('Unable to list files on directory: ' + err);
                 } else {
+                    let swaggerDocument = {};
                     await files.forEach(async file => {
                             // parse annotation files
                             await annotation.parse(path.join(config.server_controllers_path, file), async (err, annotations) => {
@@ -47,6 +51,13 @@ function routerManager() {
                                     } catch (e) {
                                         log.error(cjs.i18n.__('Annotation "@Controller" not found on controller file "{{file}}"', {file: file}));
                                     }
+
+                                    // swagger implementation
+                                    swaggerDocument.tags = swaggerDocument.tags || [];
+                                    swaggerDocument.tags.push({
+                                        name: routesInfo.controllerRoute.fname
+                                    });
+                                    let swaggerFileTag = routesInfo.controllerRoute.fname;
 
                                     const entries = Object.entries(routesInfo.controllerRoute.data);
                                     let headerAnnotationKeys =
@@ -95,6 +106,8 @@ function routerManager() {
                                     newControllerFileInstantiated.controllerRoute = routesInfo.controllerRoute.data.route;
 
                                     // if controller has entity tag, load controller-entity-base
+                                    // save raw newControllerFileInstantiated
+                                    let rawNewControllerFileInstantiated = Object.assign({}, newControllerFileInstantiated); //clone
                                     if (headerAnnotationKeys.contains("entity")) {
                                         let ControllerEntityBase = require('./controller-entity-base');
                                         let controllerEntityBase = new ControllerEntityBase();
@@ -111,7 +124,7 @@ function routerManager() {
                                                         if (method === "get" || method === "put" || method === "delete")
                                                             newRoute[method]("/:filter", newControllerFileInstantiated[method]);
                                                         newRoute[method]("/", newControllerFileInstantiated[method]);
-                                                    } catch(e) {
+                                                    } catch (e) {
                                                         log.error(cjs.i18n.__('Cannot associate default entity methods to controller "{{controller}}". Missing default functions ou wrong functions format?', {
                                                             controller: newControllerFileInstantiated.controllerName
                                                         }));
@@ -130,7 +143,7 @@ function routerManager() {
                                     for (let i = 0, j = routesInfo.routes.length; i < j; i++) {
                                         let route = routesInfo.routes[i];
                                         if (!route.data.method) {
-                                            log.error(cjs.i18n.__('@method not found at "{{routeName}}" on controller "{{routeInfoName}}"\n', {
+                                            log.error(cjs.i18n.__('@method not found at function "{{routeName}}" on controller "{{routeInfoName}}"\n', {
                                                 routeName: route.fname,
                                                 routeInfoName: routesInfo.controllerRoute.fname
                                             }));
@@ -165,7 +178,28 @@ function routerManager() {
 
                                         // set route path to controller instantiated function
                                         try {
-                                            newRoute[route.data.method.toLowerCase()](route.data.route, newControllerFileInstantiated[route.fname] || newControllerFileInstantiated.__proto__[route.fname]);
+                                            // get swagger annotations
+                                            let swaggerTextVariables = {
+                                                entityName: headerAnnotations["entity"] || "",
+                                                controllerFile: path.join(rawControllerPath, file)
+                                            }
+
+                                            // swagger annotation texts
+                                            route.data.summary = utils.formatTextController(route.data.summary, swaggerTextVariables);
+                                            route.data.description = utils.formatTextController(route.data.description, swaggerTextVariables);
+
+                                            // insert on swagger document
+                                            swagger.insertRoute({
+                                                method: route.data.method.toLowerCase(),
+                                                path: path.join(headerAnnotations.route, route.data.route),
+                                                tags: [swaggerFileTag],
+                                                summary: route.data.summary || path.join(rawControllerPath, file),
+                                                description: route.data.description,
+                                                entityName: routesInfo.controllerRoute.fname
+                                            }, swaggerDocument);
+                                            // remore previous route configured
+                                            utils.removeRouteFromStack(newRoute, route.data.method.toLowerCase(), route.data.route);
+                                            newRoute[route.data.method.toLowerCase()](route.data.route, rawNewControllerFileInstantiated[route.fname] || rawNewControllerFileInstantiated.__proto__[route.fname]);
                                         } catch (e) {
                                             log.error(e);
                                         }
@@ -183,8 +217,12 @@ function routerManager() {
                                 }
                             });
                         }
-                    )
-                    ;
+                    );
+
+                    // swagger integration
+                    if (cjs.config.swagger && cjs.config.swagger.enabled)
+                        swagger.init(swaggerDocument, core);
+
                     // load error catch routes
                     core.expressInstance.use((req, res, next) => {
                         // catch 404 and forward to error handler
@@ -194,8 +232,7 @@ function routerManager() {
                     });
                 }
             }
-        )
-        ;
+        );
     }
 
     /**

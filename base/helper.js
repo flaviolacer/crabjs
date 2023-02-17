@@ -2,8 +2,17 @@
 global.__cjs_base_path = __dirname;
 
 // prototypes
-String.prototype.contains = function (it) {
-    return this.toLowerCase().indexOfRegex(it.toLowerCase()) !== -1;
+String.prototype.contains = function (it, delimiter) {
+    delimiter = delimiter || "";
+    if (isString(it))
+        return this.toLowerCase().indexOfRegex((delimiter + it + delimiter).toLowerCase()) !== -1;
+    else if (isArray(it)) {
+        for (let i = 0, j = it.length; i < j; i++) {
+            if (this.toLowerCase().indexOfRegex((delimiter + it[i] + delimiter).toLowerCase()) !== -1)
+                return true;
+        }
+    }
+    return false;
 };
 
 String.prototype.replaceAll = function (search, replacement) {
@@ -11,14 +20,14 @@ String.prototype.replaceAll = function (search, replacement) {
     return target.replace(new RegExp(search, 'g'), replacement);
 };
 
-String.prototype.indexOfRegex = function(regex){
+String.prototype.indexOfRegex = function (regex) {
     let match = this.match(regex);
     return match ? this.indexOf(match[0]) : -1;
 };
 
-String.prototype.lastIndexOfRegex = function(regex){
+String.prototype.lastIndexOfRegex = function (regex) {
     let match = this.match(regex);
-    return match ? this.lastIndexOf(match[match.length-1]) : -1;
+    return match ? this.lastIndexOf(match[match.length - 1]) : -1;
 };
 
 Array.prototype.contains = function (k) {
@@ -38,7 +47,7 @@ global.containsObjectKey = function (obj, k, key) {
     return false;
 };
 
-Array.prototype.clone = function() {
+Array.prototype.clone = function () {
     return this.slice(0);
 };
 
@@ -52,19 +61,19 @@ global.sendJson = (res, content, status) => {
     res.json(content);
 };
 
-global.isArray = function(a) {
+global.isArray = function (a) {
     return (!!a) && (a.constructor === Array);
 };
 
-global.isString = function(s) {
+global.isString = function (s) {
     return typeof s === "string";
 };
 
-global.isObject = function(obj) {
+global.isObject = function (obj) {
     return typeof obj === 'object' && !(obj instanceof Array) && obj !== null
 };
 
-global.isDate = function(obj) {
+global.isDate = function (obj) {
     return (obj instanceof Date);
 };
 
@@ -139,7 +148,7 @@ global.verify_password = function (dbString, password) {
 };
 
 global.encrypt_password = function (password) {
-    let salt = crypto.randomBytes(32).toString('base64').substr(0,12);
+    let salt = crypto.randomBytes(32).toString('base64').substr(0, 12);
     let iterations = 10000;
     let keybase = false;
 

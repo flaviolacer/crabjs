@@ -43,5 +43,15 @@
 	"One of the certification files does not exists.": "One of the certification files does not exists.",
 	"Entity \"{{entity}}\" not found on association to controller \"{{controller}}\". Missing entity on dir?": "Entity \"{{entity}}\" not found on association to controller \"{{controller}}\". Missing entity on dir?",
 	"Need to specify the filter to return the entity.": "Need to specify the filter to return the entity.",
-	"Entity \"{{entityName}}\" removed": "Entity \"{{entityName}}\" removed"
+	"Entity \"{{entityName}}\" removed": "Entity \"{{entityName}}\" removed",
+	"Access denied. Request not authenticaded.": "Access denied. Request not authenticaded.",
+	"@method not found at \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n": "@method not found at \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n",
+	"@method not found at function \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n": "@method not found at function \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n",
+	"Error on update object. No defined primary key on entity: ${entityName}": "Error on update object. No defined primary key on entity: ${entityName}",
+	"Error on update object. No defined primary key on entity: {{entityName}}": "Error on update object. No defined primary key on entity: {{entityName}}",
+	"Error on update object. No defined body to save on entity: {{entityName}}": "Error on update object. No defined body to save on entity: {{entityName}}",
+	"Error parsing JSON content on body. Check the syntax.": "Error parsing JSON content on body. Check the syntax.",
+	"Error on insert or update object. {{saveErrorMessage}}": "Error on insert or update object. {{saveErrorMessage}}",
+	"Missing required fields. {{saveErrorMessage}}": "Missing required fields. {{saveErrorMessage}}",
+	"No infomation sent to save entity \"{{entityName}}\"": "No infomation sent to save entity \"{{entityName}}\""
 }

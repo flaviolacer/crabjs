@@ -6,6 +6,7 @@ cjs.config = require("./defaults.json")
 let core = require("./base/core");
 let routerManager = require("./base/router-manager");
 let entityManager = require("./base/entity-manager");
+const path = require("path");
 
 exports.start = function(appDir) {
     process.env.DEBUG = "i18n:debug";
@@ -14,6 +15,7 @@ exports.start = function(appDir) {
     cjs.config.app_root = appDir;
     // load locales
     cjs.i18n = core.loadLocales();
+    cjs.config.cachePath = path.join(cjs.config.app_root, cjs.config.cache_storage_path);
     // check if custom config exists
     core.loadCustomConfig();
     log.info("Initializing CrabJS...");

@@ -120,6 +120,10 @@ function core() {
             if (cjs.config.server_https)
                 host = host.replace("http","https");
 
+            cjs.config.host_address = host;
+            if (bind !== "80" && bind !== "443")
+                cjs.config.host_address += ":" + bind;
+
             if (!cjs.config.hide_start_log) {
                 log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------');
                 log.force('\x1b[36m%s\x1b[0m', '   ' + cjs.i18n.__('CrabJS started!'));
@@ -152,7 +156,18 @@ function core() {
         expressInstance.use(bodyParser.urlencoded({
             extended: true
         }));
-        expressInstance.use(bodyParser.json());
+
+        expressInstance.use((req, res, next) => {
+            bodyParser.json()(req, res, err => {
+                if (err) {
+                    const utils = require('./utils');
+                    utils.responseError(res, cjs.i18n.__('Error parsing JSON content on body. Check the syntax.'), 406);
+                    return;
+                }
+
+                next();
+            });
+        });
         //expressInstance.use(logger('Response time\: :response-time\\n'));
         // catch not found
         // start server

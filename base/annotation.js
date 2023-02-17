@@ -30,7 +30,7 @@ function annotation() {
     }
 
     this.getAnnotations = (fileContent) => {
-        let annotationMainRegex = /(\/\*\*(([\s\n*@a-zA-Z0-9_\-=;'",():]*)|([\s\n*@a-zA-Z0-9_\-=;'",():\/]*))\*\/)(([a-zA-Z0-9_.=\s])*)/gm;
+        let annotationMainRegex = /(\/\*\*(([\s\n*@a-zA-Zà-üÀ-Ü0-9<>_\-=;'",():#.\[\]$]*)|([\s\n*@a-zA-Zà-üÀ-Ü0-9<>_\-=;'",():\/#.$\[\]]*))\*\/)(([a-zA-Z0-9_.=\s])*)/gm;
 
         let result = {
             classes: [],
@@ -84,7 +84,7 @@ function annotation() {
                     value = value.substring(key.length);
 
                 // cleanup values
-                value = value.replaceAll(/([()'" =]|\*\/)/, '');
+                value = value.replaceAll(/([()'"=]|\*\/)/, '').trim();
 
                 if (matchType === 'class') {
                     if (isEmpty(result.classes[blockKey])) // classes but analized only one

@@ -1,11 +1,9 @@
-const path = require("path");
 const log = require('./log');
 const fs = require('fs');
 const cjs = require("./cjs");
+const handlebars = require("handlebars");
 
 function Util() {
-    this.cachePath = path.join(cjs.config.app_root, cjs.config.cache_storage_path);
-
     this.checkLibExists = (libName) => {
         try {
             require.resolve(libName);
@@ -14,10 +12,11 @@ function Util() {
             return false;
         }
     }
+
     this.checkCachePath = () => {
-        if (!fs.existsSync(this.cachePath))
+        if (!fs.existsSync(cjs.config.cachePath))
             try {
-                fs.mkdirSync(this.cachePath);
+                fs.mkdirSync(cjs.config.cachePath);
             } catch (e) {
                 log.error(e);
             }
@@ -42,7 +41,8 @@ function Util() {
         let ResponseError = require("./response-error");
         let responseError = new ResponseError(message, code);
         responseError.type = "error";
-        res.send(responseError);
+        res.status(code);
+        res.json(responseError);
     }
 
     function cleanEntity(data) {
@@ -67,6 +67,31 @@ function Util() {
             res.send(response);
         } else
             res.send(response);
+    }
+
+    this.removeRouteFromStack = (app, method, path) => {
+        let routeStack = app.stack || [];
+        for (let i = 0, j = routeStack.length; i < j; i++) {
+            if (routeStack[i].route && routeStack[i].route.path === path && routeStack[i].route.methods[method]) {
+                routeStack.splice(i, 1);
+                return;
+            }
+        }
+    }
+
+    this.formatTextController = (text, params) => {
+        if (isEmpty(text)) return;
+        let textMatchRegex = /\$\[([\s\n*@a-zA-Z0-9_])*]/gm;
+        let matches = [...text.matchAll(textMatchRegex)];
+        if (matches.length === 0) return text;
+        for (let i = 0, j = matches.length; i < j; i++) {
+            let match = matches[i];
+            let matchReplace = match[0];
+            matchReplace = matchReplace.replace("$[", "{{").replace("]", "}}");
+            text = text.replace(match[0], matchReplace);
+        }
+        const template = handlebars.compile(text);
+        return template(params).toString();
     }
 }
 
