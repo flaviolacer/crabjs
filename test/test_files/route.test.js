@@ -9,6 +9,8 @@ const axios = require('axios').default;
 const defaultUrl = "http://127.0.0.1:3000"; // default loopback
 const defaultController = '/product';
 const defaultEntityController = 'product';
+let newProduct;
+let responsePost;
 
 describe('Testing routing functions', function () {
     // removing security
@@ -92,9 +94,9 @@ describe('Testing routing functions', function () {
             assert.equal(e.code, "ERR_BAD_REQUEST", "Failed to validate return message:" + e.message);
         }
     });
-    it('Test entity assciation (CRUD)', async () => {
+    it('Test entity assciation (CRUD) - Method POST', async () => {
         // save values to entity
-        let newProduct = {
+        newProduct = {
             name: "testname",
             description: "testdescription"
         };
@@ -104,7 +106,7 @@ describe('Testing routing functions', function () {
 
         try {
             // test insert (POST)
-            let responsePost = await axios.post(defaultUrl + `/${defaultEntityController}_entity/`, {
+            responsePost = await axios.post(defaultUrl + `/${defaultEntityController}_entity/`, {
                 name: newProduct.name,
                 description: newProduct.description
             });
@@ -114,7 +116,12 @@ describe('Testing routing functions', function () {
                 error.code = "ERR_PRODUCT_EMPTY";
                 throw error;
             }
-
+        } catch (e) {
+            assert.fail("Cannot process entity association. Error: " + e.message);
+        }
+    });
+    it('Test entity assciation (CRUD) Method GET', async () => {
+        try {
             // test retrieve (GET)
             let responseGet = await axios.get(defaultUrl + `/${defaultEntityController}_entity/${responsePost.data.content._id}`);
             if (isEmpty(responseGet.data)) {
@@ -129,7 +136,13 @@ describe('Testing routing functions', function () {
                 error.code = "ERR_PRODUCT_EMPTY";
                 throw error;
             }
+        } catch (e) {
+            assert.fail("Cannot process entity association. Error: " + e.message);
+        }
 
+    });
+    it('Test entity assciation (CRUD) Method PUT', async () => {
+        try {
             // test update (PUT)
             let responsePut = await axios.put(defaultUrl + `/${defaultEntityController}_entity/${responsePost.data.content._id}`, {
                 name: newProduct.name + "1",
@@ -150,7 +163,12 @@ describe('Testing routing functions', function () {
                 error.code = "ERR_PRODUCT_UPDATE";
                 throw error;
             }
-
+        } catch (e) {
+            assert.fail("Cannot process entity association. Error: " + e.message);
+        }
+    });
+    it('Test entity assciation (CRUD) Method DELETE', async () => {
+        try {
             // test remove (DELETE)
             let responseDelete = await axios.delete(defaultUrl + `/${defaultEntityController}_entity/${responsePost.data.content._id}`);
             if (isEmpty(responseDelete.data)) {
@@ -168,8 +186,12 @@ describe('Testing routing functions', function () {
                 error.code = "ERR_PRODUCT_EXISTS";
                 throw error;
             }
-
-            // test multiple records
+        } catch (e) {
+            assert.fail("Cannot process entity association. Error: " + e.message);
+        }
+    });
+    it('Test entity assciation (CRUD) Method POST Multiple', async () => {
+        try {
             // insert multiple records (POST)
             let insertEntities = [
                 {name: newProduct.name, description: newProduct.description},
@@ -190,7 +212,12 @@ describe('Testing routing functions', function () {
                 error.code = "ERR_PRODUCT_BATCH";
                 throw error;
             }
-
+        } catch (e) {
+            assert.fail("Cannot process entity association. Error: " + e.message);
+        }
+    });
+    it('Test entity assciation (CRUD) Method GET Multiple', async () => {
+        try {
             // get multiple entities
             let responseGetMultiple = await axios.get(defaultUrl + `/${defaultEntityController}_entity/`);
             if (isEmpty(responseGetMultiple.data)) {
@@ -205,7 +232,12 @@ describe('Testing routing functions', function () {
                 error.code = "ERR_PRODUCT_MULTIPLE";
                 throw error;
             }
-
+        } catch (e) {
+            assert.fail("Cannot process entity association. Error: " + e.message);
+        }
+    });
+    it('Test entity assciation (CRUD) Method PUT Multiple', async () => {
+        try {
             // update multiple records
             let responsePutMultiple = await axios.put(defaultUrl + `/${defaultEntityController}_entity/`, {
                 name: newProduct.name + "1",
@@ -227,7 +259,12 @@ describe('Testing routing functions', function () {
                     throw error;
                 }
             });
-
+        } catch (e) {
+            assert.fail("Cannot process entity association. Error: " + e.message);
+        }
+    });
+    it('Test entity assciation (CRUD) Method DELETE Multiple', async () => {
+        try {
             // test remove (DELETE)
             let responseDeleteMultiple = await axios.delete(defaultUrl + `/${defaultEntityController}_entity/`, {data: {"name": newProduct.name + "1"}});
             if (isEmpty(responseDeleteMultiple.data)) {
@@ -239,7 +276,7 @@ describe('Testing routing functions', function () {
             let responseDeleteGetMultiple = await axios.get(defaultUrl + `/${defaultEntityController}_entity/`);
             if (responseDeleteGetMultiple.data.content.totalRecords > 0) {
                 let error = new Error("Error trying to validate delete multiple");
-                error.code = "ERR_PRODUCT_UPDATE";
+                error.code = "ERR_PRODUCT_DELETE";
                 throw error;
             }
         } catch (e) {
