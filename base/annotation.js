@@ -45,7 +45,7 @@ function annotation() {
             return {};
         }
 
-        let annotationRegex = /@(([a-zA-Z_][a-zA-Z0-9]*)(.*))/g;
+        let annotationRegex = /@(([a-zA-Z_][a-zA-Z0-9_]*)(.*))/g;
         let annotationMatches;
         let isClass = false;
         for (let i = 0, j = matches.length; i < j; i++) {

@@ -28,34 +28,39 @@ function swagger() {
     }
     this.insertRoute = (options, swaggerFiles) => {
         let swaggerPathItem = {};
-        swaggerPathItem[options.method] = {
-            "tags": options.tags,
-            "summary": options.summary,
-            "description": options.description,
-            "security": [{
-                "apiauth": ["default"]
-            }],
-            "responses": {
-                "200": {
-                    "description": "Successful operation",
+        if (isEmpty(swaggerPathItem[options.method]))
+            swaggerPathItem[options.method] = {
+                "tags": options.tags,
+                "summary": options.summary,
+                "description": options.description,
+                "security": [{
+                    "apiauth": ["default"]
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                    },
+                    "400": {
+                        "description": "Invalid ID supplied"
+                    },
+                    "404": {
+                        "description": options.entityName.charAt(0).toUpperCase() + options.entityName.slice(1) + " not found"
+                    },
+                    "405": {
+                        "description": "Validation exception"
+                    },
+                    "406": {
+                        "description": "Content empty or not alowed"
+                    }
                 },
-                "400": {
-                    "description": "Invalid ID supplied"
-                },
-                "404": {
-                    "description": options.entityName.charAt(0).toUpperCase() + options.entityName.slice(1) + " not found"
-                },
-                "405": {
-                    "description": "Validation exception"
-                },
-                "406": {
-                    "description": "Content empty or not alowed"
-                }
-            },
-        };
+            };
         swaggerFiles.paths = swaggerFiles.paths || {};
-        requestPath = options.path.endsWith('/') ? options.path.slice(0, -1) : options.path;
-        swaggerFiles.paths[requestPath] = swaggerPathItem;
+        let requestPath = options.path.endsWith('/') ? options.path.slice(0, -1) : options.path;
+        if (isEmpty(swaggerFiles.paths[requestPath]))
+            swaggerFiles.paths[requestPath] = swaggerPathItem;
+        else {
+            swaggerFiles.paths[requestPath][options.method] = swaggerPathItem[options.method];
+        }
     }
 }
 

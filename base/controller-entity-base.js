@@ -61,7 +61,7 @@ function ControllerEntityBase() {
             }
             utils.responseData(res, record);
         } else {
-            utils.responseError(res, cjs.i18n.__('Error on update object. No defined body to save on entity: {{entityName}}', {
+            utils.responseError(res, cjs.i18n.__('Error on save object. No defined body to save on entity: {{entityName}}', {
                 entityName: this.__entity.entityName
             }), 406);
         }
