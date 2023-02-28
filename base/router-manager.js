@@ -7,6 +7,14 @@ const cjs = require("./cjs");
 const swagger = require("./swagger");
 const utils = require("./utils");
 
+// set global controller entity base functions
+cjs.getControllerEntityBase = (entity) => {
+    if (isEmpty(entity)) return null;
+    let ControllerEntityBase = require('./controller-entity-base');
+    let controllerEntityBase = new ControllerEntityBase();
+    controllerEntityBase.__entity = cjs.entityManager.loadEntity(entity);
+    return (!isEmpty(controllerEntityBase.__entity)) ? controllerEntityBase : null;
+};
 function routerManager() {
     let instance = this;
     let config = cjs.config;
@@ -109,17 +117,15 @@ function routerManager() {
                                     // save raw newControllerFileInstantiated
                                     let rawNewControllerFileInstantiated = Object.assign({}, newControllerFileInstantiated); //clone
                                     if (headerAnnotationKeys.contains("entity")) {
-                                        let ControllerEntityBase = require('./controller-entity-base');
-                                        let controllerEntityBase = new ControllerEntityBase();
-                                        controllerEntityBase.__entity = cjs.entityManager.loadEntity(headerAnnotations["entity"]);
-                                        if (!isEmpty(controllerEntityBase.__entity)) {
+                                        let controllerEntityBase = cjs.getControllerEntityBase(headerAnnotations["entity"]);
+                                        if (!isEmpty(controllerEntityBase)) {
                                             newControllerFileInstantiated = extend(newControllerFileInstantiated, controllerEntityBase);
 
                                             // create route mappings - restful pattern
                                             let default_methods = ["get", "post", "put", "delete"];
                                             for (let i = 0, j = default_methods.length; i < j; i++) {
                                                 let method = default_methods[i];
-                                                if (!isEmpty(newControllerFileInstantiated[method])) {
+                                                if (!isEmpty(newControllerFileInstantiated["__"+method])) {
                                                     let methodActionTxt = "return";
                                                     try {
                                                         switch (method.toLowerCase()) {
@@ -150,14 +156,14 @@ function routerManager() {
                                                         swagger.insertRoute(swaggerOptions, swaggerDocument);
 
                                                         if (method === "get" || method === "put" || method === "delete") {
-                                                            newRoute[method]("/:filter", newControllerFileInstantiated[method]);
+                                                            newRoute[method]("/:filter", newControllerFileInstantiated["__"+method]);
                                                             swaggerOptions.path = path.join(headerAnnotations.route, "/:filter");
                                                             // insert route on swagger
                                                             swaggerOptions.summary = headerAnnotations["sw_" + method.toLowerCase() + "_summary_filter"] || swaggerOptions.summary;
                                                             swaggerOptions.description = headerAnnotations["sw_" + method.toLowerCase() + "_description_filter"] || swaggerOptions.description;
                                                             swagger.insertRoute(swaggerOptions, swaggerDocument);
                                                         }
-                                                        newRoute[method]("/", newControllerFileInstantiated[method]);
+                                                        newRoute[method]("/", newControllerFileInstantiated["__"+method]);
                                                     } catch (e) {
                                                         log.error(cjs.i18n.__('Cannot associate default entity methods to controller "{{controller}}". Missing default functions ou wrong functions format?', {
                                                             controller: newControllerFileInstantiated.controllerName
@@ -234,7 +240,12 @@ function routerManager() {
                                             }, swaggerDocument);
                                             // remore previous route configured
                                             utils.removeRouteFromStack(newRoute, route.data.method.toLowerCase(), route.data.route);
-                                            newRoute[route.data.method.toLowerCase()](route.data.route, rawNewControllerFileInstantiated[route.fname] || rawNewControllerFileInstantiated.__proto__[route.fname]);
+                                            // if controller entity was used then associate controller in function
+                                            let methodFunction = rawNewControllerFileInstantiated[route.fname] || rawNewControllerFileInstantiated.__proto__[route.fname];
+                                            //if (!isEmpty(controllerEntityBase.__entity) && !isEmpty(methodFunction))
+                                            //    methodFunction
+
+                                            newRoute[route.data.method.toLowerCase()](route.data.route, methodFunction);
                                         } catch (e) {
                                             log.error(e);
                                         }

@@ -54,5 +54,6 @@
 	"Error on insert or update object. {{saveErrorMessage}}": "Error on insert or update object. {{saveErrorMessage}}",
 	"Missing required fields. {{saveErrorMessage}}": "Missing required fields. {{saveErrorMessage}}",
 	"No infomation sent to save entity \"{{entityName}}\"": "No infomation sent to save entity \"{{entityName}}\"",
-	"This method {{methodAction}} {{entityName}} entitie(s).": "This method {{methodAction}} {{entityName}} entitie(s)."
+	"This method {{methodAction}} {{entityName}} entitie(s).": "This method {{methodAction}} {{entityName}} entitie(s).",
+	"Error on save object. No defined body to save on entity: {{entityName}}": "Error on save object. No defined body to save on entity: {{entityName}}"
 }

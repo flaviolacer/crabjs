@@ -6,7 +6,7 @@ function ControllerEntityBase() {
     /**
      * Controller entity
      */
-    this.__entity;
+    this.__entity = null;
 
     let save_update = async (req, res) => {
         let em = cjs.entityManager;
@@ -70,12 +70,11 @@ function ControllerEntityBase() {
     /**
      * Save entity in repository
      */
-    this.post = save_update;
-
+    this.__post = save_update;
     /**
      * Retrieve entity from repository
      */
-    this.get = async (req, res) => {
+    this.__get = async (req, res) => {
         let singleRecord = true;
         let filter = req.params.filter || req.query;
 
@@ -106,16 +105,14 @@ function ControllerEntityBase() {
         }
         utils.responseData(res, dataObject, {type: "entity"});
     }
-
     /**
      * Update entity in repository
      */
-    this.put = save_update;
-
+    this.__put = save_update;
     /**
      * delete record from entity in repository
      */
-    this.delete = async (req, res) => {
+    this.__delete = async (req, res) => {
         let filter = req.params.filter || req.body || {};
 
         if (!isEmpty(filter) && isString(filter)) {
@@ -143,7 +140,6 @@ function ControllerEntityBase() {
         }
         utils.responseData(res, retDeleted, {type: "entity"});
     };
-
 }
 
 module.exports = ControllerEntityBase;

@@ -11,10 +11,6 @@ function Entity() {
      * Entity name
      */
     this.entityName;
-    /**
-     * Name of the entity in repository
-     */
-    this.repositoryEntityName;
 
     /**
      * Save entity in repository
