@@ -282,7 +282,7 @@ function entityManager() {
                     log.info("Data retrived:", entityData);
                     resolve(this.newEntity(entity, entityData));
                 } else {
-                    log.info("Entity not found on repository");
+                    log.info(cjs.i18n.__("Entity not found on repository"));
                     resolve(null);
                 }
             } catch (e) {

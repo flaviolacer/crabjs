@@ -27,7 +27,7 @@ function product_custom() {
     this.price;
 
     /**
-     * @contructor
+     * @constructor
      */
     this.test = function() {
 

@@ -124,12 +124,21 @@ function mongoDB() {
             let db = await this.getDb();
             if (!db) {
                 log.error(cjs.i18n.__("Cannot get \"{{entityName}}\" entities", {entityName: options.entity}));
-                resolve(false);
+                reject(false);
                 return;
             }
 
             // convert fields to types
-            convertFieldsToTypeDefinitions(filter, options.definitions);
+            try {
+                convertFieldsToTypeDefinitions(filter, options.definitions);
+            } catch (e) {
+                log.error(e.message);
+                reject({
+                    error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: options.entity}),
+                    error_code: Constants.UNDEFINED_ERROR
+                });
+                return;
+            }
 
             let pipeline = filter.$pipeline || [];
             delete filter.$pipeline;
@@ -197,8 +206,16 @@ function mongoDB() {
 
             //convert fields on filter for the right type
             // convert fields to types
-            convertFieldsToTypeDefinitions(filter, options.definitions);
-
+            try {
+                convertFieldsToTypeDefinitions(filter, options.definitions);
+            } catch (e) {
+                log.error(e.message);
+                reject({
+                    error: true,
+                    error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: options.entity}),
+                    error_code: Constants.UNDEFINED_ERROR
+                });
+            }
             let collectionName = options.definitions.entity.data.RepositoryName || options.entity;
             try {
                 await db.collection(collectionName).findOne(filter).then((obj) => {
@@ -219,11 +236,11 @@ function mongoDB() {
 
         // conditions on insert
         let filter = options.filter || {};
-        return new Promise(async (resolve) => {
+        return new Promise(async (resolve, reject) => {
             let db = await this.getDb();
             if (!db) {
                 log.error(cjs.i18n.__("Cannot save entity {{entityName}}", {entityName: entity.entityName}));
-                resolve({
+                reject({
                     error: true,
                     error_message: cjs.i18n.__("Cannot save entity {{entityName}}", {entityName: entity.entityName}),
                     error_code: Constants.CONNECTION_ERROR
@@ -242,6 +259,7 @@ function mongoDB() {
             // prepare data to save
             let fieldsKeys = Object.keys(entity.__definitions.fields);
             let entityPersistInfo = {};
+            let fieldDefaultValues = {};
             for (let i = 0, j = fieldsKeys.length; i < j; i++) {
                 let fieldRef = fieldsKeys[i];
                 let fieldName = (isEmpty(fields[fieldRef].field)) ? fieldRef : fields[fieldRef].field;
@@ -249,7 +267,7 @@ function mongoDB() {
                     log.error(cjs.i18n.__("Required field \"{{fieldName}}\" was not set on entity \"{{entityName}}\"", {
                         fieldName: fieldName, entityName: entity.entityName
                     }));
-                    resolve({
+                    reject({
                         error: true,
                         error_message: cjs.i18n.__("Required field \"{{fieldName}}\" was not set on entity \"{{entityName}}\"", {
                             fieldName: fieldName, entityName: entity.entityName
@@ -260,10 +278,13 @@ function mongoDB() {
                 }
 
                 try {
-                    if (!isEmpty(entity[fieldRef])) entityPersistInfo[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
+                    if (!isEmpty(entity[fieldRef]))
+                        entityPersistInfo[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
+                    else if (!isEmpty(fields[fieldRef].defaultValue))
+                        fieldDefaultValues[fieldName] = this.setType(fields[fieldRef].defaultValue, fields[fieldRef].type);
                 } catch (e) {
                     log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field.", {entityName: entity.entityName}));
-                    resolve({
+                    reject({
                         error: true,
                         error_message: cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field.", {entityName: entity.entityName}),
                         error_code: Constants.FIELD_VALUE_ERROR
@@ -274,7 +295,7 @@ function mongoDB() {
 
             if (isEmpty(entityPersistInfo)) {
                 log.error(cjs.i18n.__("No infomation sent to save entity \"{{entityName}}\"", {entityName: entity.entityName}));
-                resolve({
+                reject({
                     error: true,
                     error_message: cjs.i18n.__("No infomation sent to save entity \"{{entityName}}\"", {entityName: entity.entityName}),
                     error_code: Constants.EMPTY_CONTENT_ERROR
@@ -282,10 +303,15 @@ function mongoDB() {
                 return;
             }
 
+            // insert default values for empty fields
+            let defaultFieldKeys = Object.keys(fieldDefaultValues);
+            for (let i = 0, j = defaultFieldKeys.length; i < j; i++)
+                entityPersistInfo[defaultFieldKeys[i]] = fieldDefaultValues[defaultFieldKeys[i]];
+
             let collectionName = entity.__definitions.entity.data.RepositoryName || entity.entityName;
             if (isEmpty(filter)) { // insert data
                 if (isEmpty(entityPersistInfo)) {
-                    resolve({
+                    reject({
                         error: true,
                         error_message: cjs.i18n.__("No infomation aquired from entity \"{{entityName}}\"", {entityName: entity.entityName}),
                         error_code: Constants.UNDEFINED_ERROR
@@ -297,21 +323,34 @@ function mongoDB() {
                     writeConcern: {
                         w: 1, j: true
                     }
-                }).catch((e) => {
-                    log.error(e);
-                    resolve({
-                        error: true,
-                        error_message: cjs.i18n.__("Undefined error on trying to insert entity \"{{entityName}}\"", {entityName: entity.entityName}),
-                        error_code: Constants.UNDEFINED_ERROR
-                    });
                 }).then((obj) => {
                     // for best practices with mongodb, set _id for the document
                     entity._id = obj.insertedId;
                     resolve(entity);
+                }).catch((e) => {
+                    log.error(e);
+                    let error_code = Constants.UNDEFINED_ERROR;
+                    if (e.code === 11000)
+                        error_code = Constants.DUPLICATE_KEY_ERROR;
+
+                    reject({
+                        error: true,
+                        error_message: cjs.i18n.__("Undefined error on trying to insert entity \"{{entityName}}\"", {entityName: entity.entityName}),
+                        error_code: error_code
+                    });
                 });
             } else {
-                // convert field names
-                convertFieldsToTypeDefinitions(filter, entity.__definitions);
+                try {
+                    // convert field names
+                    convertFieldsToTypeDefinitions(filter, entity.__definitions);
+                } catch (e) {
+                    log.error(e.message);
+                    reject({
+                        error: true,
+                        error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: entity.entityName}),
+                        error_code: Constants.UNDEFINED_ERROR
+                    });
+                }
 
                 // persist data and return the modified
                 if (filter.__update_multiple) {
@@ -323,7 +362,7 @@ function mongoDB() {
                         }
                     }).catch((e) => {
                         log.error(e);
-                        resolve({
+                        reject({
                             error: true,
                             error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: entity.entityName}),
                             error_code: Constants.UNDEFINED_ERROR
@@ -344,7 +383,7 @@ function mongoDB() {
                             log.error(cjs.i18n.__("Error trying to save record on repository. Record id already exists?"));
                         else
                             log.error(e);
-                        resolve({
+                        reject({
                             error: true,
                             error_message: cjs.i18n.__("Undefined error on trying to find and update entity \"{{entityName}}\"", {entityName: entity.entityName}),
                             error_code: Constants.UNDEFINED_ERROR
@@ -382,8 +421,15 @@ function mongoDB() {
             } else {
                 delete filter.__force_delete;
                 // convert field names
-                convertFieldsToTypeDefinitions(filter, definitions);
-
+                try {
+                    convertFieldsToTypeDefinitions(filter, definitions);
+                } catch (e) {
+                    log.error(e.message);
+                    reject({
+                        error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: entity.entityName}),
+                        error_code: Constants.UNDEFINED_ERROR
+                    });
+                }
                 // remove data and return the modified
                 await db.collection(collectionName).deleteMany(filter, {
                     writeConcern: {
@@ -397,7 +443,7 @@ function mongoDB() {
                         return;
                     } else
                         log.error(e);
-                    resolve(false);
+                    reject(false);
                 }).then((data) => {
                     resolve(data);
                 });

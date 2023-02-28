@@ -145,11 +145,11 @@ function routerManager() {
                                                             method: method,
                                                             path: path.join(headerAnnotations.route, "/"),
                                                             tags: [swaggerFileTag],
-                                                            summary: headerAnnotations["sw_" + method.toLowerCase() + "_summary"] || cjs.i18n.__("This method {{methodAction}} {{entityName}} entitie(s).", {
+                                                            summary: headerAnnotations["sw" + method.toLowerCase() + "summary"] || cjs.i18n.__("This method {{methodAction}} {{entityName}} entitie(s).", {
                                                                 "methodAction": methodActionTxt,
                                                                 "entityName": routesInfo.controllerRoute.fname
                                                             }),
-                                                            description: headerAnnotations["sw_" + method.toLowerCase() + "_description"],
+                                                            description: headerAnnotations["sw" + method.toLowerCase() + "description"],
                                                             entityName: routesInfo.controllerRoute.fname
                                                         };
 
@@ -159,8 +159,8 @@ function routerManager() {
                                                             newRoute[method]("/:filter", newControllerFileInstantiated["__"+method]);
                                                             swaggerOptions.path = path.join(headerAnnotations.route, "/:filter");
                                                             // insert route on swagger
-                                                            swaggerOptions.summary = headerAnnotations["sw_" + method.toLowerCase() + "_summary_filter"] || swaggerOptions.summary;
-                                                            swaggerOptions.description = headerAnnotations["sw_" + method.toLowerCase() + "_description_filter"] || swaggerOptions.description;
+                                                            swaggerOptions.summary = headerAnnotations["sw" + method.toLowerCase() + "summaryfilter"] || swaggerOptions.summary;
+                                                            swaggerOptions.description = headerAnnotations["sw" + method.toLowerCase() + "descriptionfilter"] || swaggerOptions.description;
                                                             swagger.insertRoute(swaggerOptions, swaggerDocument);
                                                         }
                                                         newRoute[method]("/", newControllerFileInstantiated["__"+method]);

@@ -35,10 +35,13 @@ function ControllerEntityBase() {
                         delete newProduct.__filter;
                     }
 
-                    record = await newProduct.save(options);
-                    if (record.error) {
+                    try {
+                        record = await newProduct.save(options);
+                    } catch (e) {
                         let errorMessage;
-                        switch (record.error_code) {
+                        let errorCode = 406;
+                        let errorReferenceCode = 0;
+                        switch (e.error_code) {
                             case Constants.REQUIRED_FIELD_ERROR:
                                 errorMessage = "Missing required fields.";
                                 break;
@@ -48,11 +51,15 @@ function ControllerEntityBase() {
                             case Constants.EMPTY_CONTENT_ERROR:
                                 errorMessage = "Check the information sent. Please verify that there is the correct fields with values.";
                                 break;
+                            case Constants.DUPLICATE_KEY_ERROR:
+                                errorMessage = "Record already exists.";
+                                errorReferenceCode = 11;
+                                break;
                             default:
                         }
                         utils.responseError(res, cjs.i18n.__('Error on insert or update object. {{saveErrorMessage}}', {
                             saveErrorMessage: errorMessage
-                        }), 406);
+                        }), errorCode, errorReferenceCode);
                         return;
                     }
                 }

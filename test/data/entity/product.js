@@ -26,7 +26,13 @@ function product() {
     this.price;
 
     /**
-     * @contructor
+     * @field
+     * @defaultValue = 'item'
+     */
+    this.type;
+
+    /**
+     * @constructor
      */
     this.test = function() {
 

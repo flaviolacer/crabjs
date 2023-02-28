@@ -236,6 +236,26 @@ describe('Testing routing functions', function () {
             assert.fail("Cannot process entity association. Error: " + e.message);
         }
     });
+    it('Test get entity controller functions', async () => {
+        try {
+            // get multiple entities
+            let responseGetMultiple = await axios.get(defaultUrl + `/${defaultEntityController}_entity/test/items`);
+            if (isEmpty(responseGetMultiple.data)) {
+                let error = new Error("Cannot make request");
+                error.code = "ERR_EMPTY";
+                throw error;
+            }
+
+            // validate returned 3
+            if (!isArray(responseGetMultiple.data.content.records) || responseGetMultiple.data.content.totalRecords < 3) {
+                let error = new Error("Error trying to get multiple records");
+                error.code = "ERR_PRODUCT_MULTIPLE";
+                throw error;
+            }
+        } catch (e) {
+            assert.fail("Cannot process entity association. Error: " + e.message);
+        }
+    });
     it('Test entity assciation (CRUD) Method PUT Multiple', async () => {
         try {
             // update multiple records
