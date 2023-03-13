@@ -106,8 +106,9 @@ let checkAuthEntity = async (req) => {
         return false;
 
     let repoPassword = credential[securityConfig.auth_entity.password_field];
-    req.authInfo.testAuthUser = testUsernameValue;
-    req.authInfo.testAuthPass = testPasswordValue;
+    // security
+    req.authInfo.authUser = credential[securityConfig.auth_entity.username_field];
+    req.authInfo.authId = credential._id;
     return verify_password(repoPassword, testPasswordValue);
 }
 
@@ -144,6 +145,7 @@ let generateToken = (payload, forcedSecretKey, forcedTokenExpires) => {
     // remove payload default previous info
     delete payload.iat;
     delete payload.exp;
+    delete payload.clientSecret;
 
     try {
         return jwt.sign(payload, forcedSecretKey, {
@@ -244,18 +246,29 @@ async function security(req, res, next) {
         }
 
         // api authentication
-        let isAuthenticated = await checkOAuth2Auth(req) || await checkAuthEntity(req) || await checkAuthToken(req);
+        let isAuthenticated = await checkOAuth2Auth(req) || await checkAuthToken(req);
 
         // get route and check if is eligible
         // secBypassRoutes
         const baseURL = req.protocol + '://' + req.headers.host + '/';
         let urlInfo = new URL(req.url, baseURL);
         cjs.secBypassRoutes = cjs.secBypassRoutes || []; // memory allocation for url security bypass
-        if ((urlInfo.pathname === securityConfig.jwt.token_signin_route) || (securityConfig.auth_entity && securityConfig.auth_entity.route && urlInfo.pathname === securityConfig.auth_entity.route)) { // request token && auth entity
+        if ((urlInfo.pathname === securityConfig.jwt.token_signin_route)) { // auth api credencials
             if (isAuthenticated) {
-                await generateRequestToken(res, req.authInfo);
+                let payload = {};
+                payload[securityConfig.jwt.sign_client_id_field] = req.authInfo[securityConfig.jwt.sign_client_id_field];
+                await generateRequestToken(res, payload);
             } else {
                 let err = new Error(cjs.i18n.__('Access denied. Invalid credentials.'), 403);
+                sendJson(res, err, 403);
+            }
+        } else if (securityConfig.auth_entity && securityConfig.auth_entity.route && urlInfo.pathname === securityConfig.auth_entity.route) { // auth entity
+            // is auth entity checked
+            let authEntityChecked = await checkAuthEntity(req);
+            if (isAuthenticated && authEntityChecked) {
+                await generateRequestToken(res, req.authInfo);
+            } else {
+                let err = new Error(cjs.i18n.__('Access denied. Invalid authentication.'), 403);
                 sendJson(res, err, 403);
             }
         } else if (urlInfo.pathname === securityConfig.jwt.refresh_token.refresh_token_route) { // refresh token - new token

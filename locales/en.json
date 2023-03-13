@@ -58,5 +58,6 @@
 	"Error on save object. No defined body to save on entity: {{entityName}}": "Error on save object. No defined body to save on entity: {{entityName}}",
 	"Undefined error on trying to update entity \"{{entityName}}\"": "Undefined error on trying to update entity \"{{entityName}}\"",
 	"Undefined error on trying to insert entity \"{{entityName}}\"": "Undefined error on trying to insert entity \"{{entityName}}\"",
-	"Entity not found on repository": "Entity not found on repository"
+	"Entity not found on repository": "Entity not found on repository",
+	"Access denied. Invalid authentication.": "Access denied. Invalid authentication."
 }

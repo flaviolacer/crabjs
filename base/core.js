@@ -157,6 +157,9 @@ function core() {
             extended: true
         }));
 
+        // log request content
+        expressInstance.use(require('./request-info')());
+
         expressInstance.use((req, res, next) => {
             bodyParser.json()(req, res, err => {
                 if (err) {
