@@ -1,6 +1,9 @@
 {
   "name": "crabjs",
-  "version": "1.0.5",
+  "version": "1.0.6",
+  "repository":"https://github.com/flaviolacer/crabjs",
+  "author": "Flavio Lacerda",
+  "homepage": "https://github.com/flaviolacer/crabjs",
   "bin": {
     "cjs": "./cli/run.js"
   },
