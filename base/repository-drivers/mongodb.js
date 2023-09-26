@@ -277,16 +277,18 @@ function mongoDB() {
                     return;
                 }
 
+                if (isEmpty(entity[fieldRef])) continue;
+
                 try {
                     if (!isEmpty(entity[fieldRef]))
                         entityPersistInfo[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
                     else if (!isEmpty(fields[fieldRef].defaultValue))
                         fieldDefaultValues[fieldName] = this.setType(fields[fieldRef].defaultValue, fields[fieldRef].type);
                 } catch (e) {
-                    log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field.", {entityName: entity.entityName}));
+                    log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.", {entityName: entity.entityName, fieldName: fieldRef}));
                     reject({
                         error: true,
-                        error_message: cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field.", {entityName: entity.entityName}),
+                        error_message: cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.", {entityName: entity.entityName, fieldName: fieldRef}),
                         error_code: Constants.FIELD_VALUE_ERROR
                     });
                     return;
@@ -399,6 +401,11 @@ function mongoDB() {
         let filter = options.filter || {};
         let definitions = options.definitions || entity.__definitions || {};
         return new Promise(async (resolve, reject) => {
+            if (entity == null) {
+                log.error(cjs.i18n.__("Cannot remove entity. Entity field is null"));
+                return;
+            }
+
             let db = await this.getDb();
             if (!db) {
                 log.error(cjs.i18n.__("Cannot remove entity {{entityName}}", {entityName: entity.entityName}));

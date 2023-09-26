@@ -89,6 +89,9 @@ class tokensRevoked {
     }
 
     getRepository() {
+        if (cjs.config.security.security_repository && cjs.config.security.security_repository.revoke_token_storage_type)
+            this.type = cjs.config.security.security_repository.revoke_token_storage_type;
+
         switch (this.type) {
             case "file":
                 return this.getFileStorage();

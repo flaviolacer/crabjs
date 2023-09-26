@@ -52,10 +52,10 @@ describe('Testing security functions and configs with repository', function () {
         // set entity directory
         cjs.config.server_entities_path = "../data/entity";
         // security repository config
-        cjs.config.security.security_repository = true;
-        // security repository config
-        userTokenStorage.type = "repository";
-        revokedTokenStorage.type = "repository";
+        cjs.config.security.security_repository = {
+            "token_storage_type" : "repository",
+            "revoke_token_storage_type" : "repository"
+        };
 
         // init server
         try {

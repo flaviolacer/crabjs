@@ -56,9 +56,9 @@ function __access_storage() {
             ]
         };
         let expiredTokens = (await md.aggregate(options)).results;
-        for (let i = 0,j = expiredTokens.length;i < j; i++) {
+        for (let i = 0, j = expiredTokens.length; i < j; i++) {
             let expiredToken = expiredTokens[i];
-            await md.remove({_id: expiredToken._id, definitions: entity.__definitions });
+            await md.remove({entity: entity, filter: {_id: expiredToken._id}, definitions: entity.__definitions});
         }
     }
 

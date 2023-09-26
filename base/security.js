@@ -262,10 +262,10 @@ async function security(req, res, next) {
                 let err = new Error(cjs.i18n.__('Access denied. Invalid credentials.'), 403);
                 sendJson(res, err, 403);
             }
-        } else if (securityConfig.auth_entity && securityConfig.auth_entity.route && urlInfo.pathname === securityConfig.auth_entity.route) { // auth entity
+        } else if (securityConfig.auth_entity && securityConfig.auth_entity.route && urlInfo.pathname === securityConfig.auth_entity.route && isAuthenticated) { // auth entity
             // is auth entity checked
             let authEntityChecked = await checkAuthEntity(req);
-            if (isAuthenticated && authEntityChecked) {
+            if (authEntityChecked) {
                 await generateRequestToken(res, req.authInfo);
             } else {
                 let err = new Error(cjs.i18n.__('Access denied. Invalid authentication.'), 403);
