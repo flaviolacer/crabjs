@@ -77,6 +77,10 @@ global.isDate = function (obj) {
     return (obj instanceof Date);
 };
 
+global.isBoolean = function(val) {
+    return val === false || val === true;
+}
+
 global.extend = function (target) {
     if (target == null) return;
     let sources = [].slice.call(arguments, 1);

@@ -53,7 +53,9 @@ function mongoDB() {
                 return encrypt_password(value);
             case "datetime":
             case "date":
-                return new Date(value);
+                return (value === "now") ? new Date() : new Date(value);
+            case "boolean":
+                return !isBoolean(value) ? Boolean(value) : value;
             default:
                 return value;
         }
@@ -276,8 +278,6 @@ function mongoDB() {
                     });
                     return;
                 }
-
-                if (isEmpty(entity[fieldRef])) continue;
 
                 try {
                     if (!isEmpty(entity[fieldRef]))
