@@ -79,6 +79,7 @@ let checkAuthEntity = async (req) => {
     let testPasswordValue;
 
     let grant_type = req.query["grant_type"] || req.body["grant_type"] || req.headers["grant_type"];
+    let scope = req.query["scope"] || req.body["scope"] || req.headers["scope"];
 
     if (grant_type === "password") { // RFCOAuth2 // swagger
         securityConfig.auth_entity.request_username_field = "username";
@@ -98,6 +99,9 @@ let checkAuthEntity = async (req) => {
 
     if (isEmpty(testUsernameValue) || isEmpty(testPasswordValue))
         return false;
+
+    if (!isEmpty(scope))
+        authLoginFields.scope = scope;
 
     authLoginFields[securityConfig.auth_entity.username_field] = testUsernameValue;
 
