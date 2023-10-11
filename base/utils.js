@@ -37,12 +37,12 @@ function Util() {
         return nonce;
     };
 
-    this.responseError = function (res, message, code, refCode) {
+    this.responseError = function (res, message, code, data) {
         let ResponseError = require("./response-error");
         let responseError = new ResponseError(message, code);
         responseError.type = "error";
-        if (refCode)
-            responseError.ref_error_code = refCode;
+        if (data)
+            responseError.data = data;
         res.status(code);
         res.json(responseError);
     }

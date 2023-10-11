@@ -4,6 +4,7 @@ const log = require('./base/log');
 let cjs = require("./base/cjs");
 cjs.config = require("./defaults.json")
 let core = require("./base/core");
+const utils = require("./base/utils");
 let routerManager = require("./base/router-manager");
 let entityManager = require("./base/entity-manager");
 const path = require("path");
@@ -27,6 +28,7 @@ exports.start = function(appDir) {
     // load entityManager to memory
     entityManager.init();
     cjs.entityManager = entityManager;
+    cjs.utils = utils;
     // return cjs object to app
     return cjs;
 }

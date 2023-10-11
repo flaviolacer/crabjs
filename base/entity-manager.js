@@ -278,7 +278,7 @@ function entityManager() {
                     filter: filter
                 });
 
-                if (!isEmpty(entityData)) {
+                if (!isEmpty(entityData) && (entityData !== false)) {
                     log.info("Data retrived:", entityData);
                     resolve(this.newEntity(entity, entityData));
                 } else {
@@ -324,8 +324,11 @@ function entityManager() {
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
                     filter: filter,
-                    page_size : options.page_size || config.repository_page_size || 10,
-                    page_number: options.page_number || 1
+                    options: {
+                        page_size: options.page_size || config.repository_page_size || 10,
+                        page_number: options.page_number || 1,
+                        sort : options.sort
+                    }
                 });
 
                 if (entities) {

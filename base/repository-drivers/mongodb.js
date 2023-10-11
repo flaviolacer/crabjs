@@ -50,7 +50,10 @@ function mongoDB() {
                     throw new Error(e);
                 }
             case "password":
-                return encrypt_password(value);
+                if (isObject(value) && value.__plain)
+                    return value.content;
+                else
+                    return encrypt_password(value);
             case "datetime":
             case "date":
                 return (value === "now") ? new Date() : new Date(value);
@@ -118,25 +121,25 @@ function mongoDB() {
         });
     };
 
-    this.find = async (options) => {
-        let filter = options.filter || {};
-        options = options || {};
+    this.find = async (params) => {
+        let filter = params.filter || {};
+        let options = params.options || {};
 
         return new Promise(async (resolve, reject) => {
             let db = await this.getDb();
             if (!db) {
-                log.error(cjs.i18n.__("Cannot get \"{{entityName}}\" entities", {entityName: options.entity}));
+                log.error(cjs.i18n.__("Cannot get \"{{entityName}}\" entities", {entityName: params.entity}));
                 reject(false);
                 return;
             }
 
             // convert fields to types
             try {
-                convertFieldsToTypeDefinitions(filter, options.definitions);
+                convertFieldsToTypeDefinitions(filter, params.definitions);
             } catch (e) {
                 log.error(e.message);
                 reject({
-                    error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: options.entity}),
+                    error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: params.entity}),
                     error_code: Constants.UNDEFINED_ERROR
                 });
                 return;
@@ -153,6 +156,15 @@ function mongoDB() {
             let pipeline_count = pipeline.clone();
             pipeline_count.push({"$count": "count"});
 
+            // sort order
+            if (options.sort) {
+                let sortKeys = Object.keys(options.sort);
+                for (let i = 0, j = sortKeys.length; i < j; i++)
+                    options.sort[sortKeys[i]] = parseInt(options.sort[sortKeys[i]]);
+                pipeline.push({$sort: options.sort});
+                delete options.sort;
+            }
+
             // pagination
             if (options.page_number && options.page_size) {
                 pipeline.push({$skip: (options.page_number - 1) * options.page_size});
@@ -161,7 +173,7 @@ function mongoDB() {
 
             let aggregate_options = {collation: {locale: "pt"}, allowDiskUse: true};
 
-            let collectionName = options.definitions.entity.data.RepositoryName || options.entity;
+            let collectionName = params.definitions.entity.data.RepositoryName || params.entity;
             let res_cursor;
             let record_count_cursor;
             try {
@@ -265,7 +277,7 @@ function mongoDB() {
             for (let i = 0, j = fieldsKeys.length; i < j; i++) {
                 let fieldRef = fieldsKeys[i];
                 let fieldName = (isEmpty(fields[fieldRef].field)) ? fieldRef : fields[fieldRef].field;
-                if (typeof fields[fieldRef].required !== "undefined" && isEmpty(entity[fieldRef])) { // required fields
+                if (typeof fields[fieldRef].required !== "undefined" && isEmpty(entity[fieldRef]) && isEmpty(filter) || (!isEmpty(filter) && entity.hasOwnProperty(fieldRef) && isEmpty(entity[fieldRef]))) { // required fields
                     log.error(cjs.i18n.__("Required field \"{{fieldName}}\" was not set on entity \"{{entityName}}\"", {
                         fieldName: fieldName, entityName: entity.entityName
                     }));
@@ -285,10 +297,16 @@ function mongoDB() {
                     else if (!isEmpty(fields[fieldRef].defaultValue))
                         fieldDefaultValues[fieldName] = this.setType(fields[fieldRef].defaultValue, fields[fieldRef].type);
                 } catch (e) {
-                    log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.", {entityName: entity.entityName, fieldName: fieldRef}));
+                    log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.", {
+                        entityName: entity.entityName,
+                        fieldName: fieldRef
+                    }));
                     reject({
                         error: true,
-                        error_message: cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.", {entityName: entity.entityName, fieldName: fieldRef}),
+                        error_message: cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.", {
+                            entityName: entity.entityName,
+                            fieldName: fieldRef
+                        }),
                         error_code: Constants.FIELD_VALUE_ERROR
                     });
                     return;
@@ -332,13 +350,17 @@ function mongoDB() {
                 }).catch((e) => {
                     log.error(e);
                     let error_code = Constants.UNDEFINED_ERROR;
-                    if (e.code === 11000)
+                    let error_message = cjs.i18n.__("Undefined error on trying to insert entity \"{{entityName}}\"", {entityName: entity.entityName});
+                    if (e.code === 11000) {
                         error_code = Constants.DUPLICATE_KEY_ERROR;
+                        error_message = cjs.i18n.__("Duplicate key error on trying to insert entity \"{{entityName}}\"", {entityName: entity.entityName});
+                    }
 
                     reject({
                         error: true,
-                        error_message: cjs.i18n.__("Undefined error on trying to insert entity \"{{entityName}}\"", {entityName: entity.entityName}),
-                        error_code: error_code
+                        error_message: error_message,
+                        error_code: error_code,
+                        error_entity: entity.entityName
                     });
                 });
             } else {

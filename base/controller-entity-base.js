@@ -83,11 +83,22 @@ function ControllerEntityBase() {
      */
     this.__get = async (req, res) => {
         let singleRecord = true;
-        let filter = req.params.filter || req.query;
+        let filter = req.params.filter;
 
         if (isEmpty(filter)) {
             singleRecord = false;
         }
+
+        let queryFields = req.query || {};
+        let options = {};
+        if (!isEmpty(queryFields.options)) {
+            options = queryFields.options;
+            delete queryFields.options;
+        }
+        filter = filter || queryFields;
+
+        if (!options.rawData)
+            options.rawData = true;
 
         // if is string, tranform in object with primary key
         if (isString(filter)) {
@@ -99,7 +110,7 @@ function ControllerEntityBase() {
                 utils.responseData(res, null);
                 return;
             }
-            let testFilter = [];
+            let testFilter = {};
             testFilter[primaryKeys[0]] = filter;
             filter = testFilter;
         }
@@ -108,7 +119,7 @@ function ControllerEntityBase() {
         if (singleRecord) {
             dataObject = await cjs.entityManager.getEntity(this.__entity.entityName, filter);
         } else {
-            dataObject = await cjs.entityManager.getEntities(this.__entity.entityName, filter, {rawData: true});
+            dataObject = await cjs.entityManager.getEntities(this.__entity.entityName, filter, options);
         }
         utils.responseData(res, dataObject, {type: "entity"});
     }

@@ -94,7 +94,7 @@ describe('Testing routing functions', function () {
             assert.equal(e.code, "ERR_BAD_REQUEST", "Failed to validate return message:" + e.message);
         }
     });
-    it('Test entity assciation (CRUD) - Method POST', async () => {
+    it('Test entity association (CRUD) - Method POST', async () => {
         // save values to entity
         newProduct = {
             name: "testname",
@@ -120,7 +120,7 @@ describe('Testing routing functions', function () {
             assert.fail("Cannot process entity association. Error: " + e.message);
         }
     });
-    it('Test entity assciation (CRUD) Method GET', async () => {
+    it('Test entity association (CRUD) Method GET', async () => {
         try {
             // test retrieve (GET)
             let responseGet = await axios.get(defaultUrl + `/${defaultEntityController}_entity/${responsePost.data.content._id}`);
@@ -141,7 +141,7 @@ describe('Testing routing functions', function () {
         }
 
     });
-    it('Test entity assciation (CRUD) Method PUT', async () => {
+    it('Test entity association (CRUD) Method PUT', async () => {
         try {
             // test update (PUT)
             let responsePut = await axios.put(defaultUrl + `/${defaultEntityController}_entity/${responsePost.data.content._id}`, {
@@ -167,7 +167,7 @@ describe('Testing routing functions', function () {
             assert.fail("Cannot process entity association. Error: " + e.message);
         }
     });
-    it('Test entity assciation (CRUD) Method DELETE', async () => {
+    it('Test entity association (CRUD) Method DELETE', async () => {
         try {
             // test remove (DELETE)
             let responseDelete = await axios.delete(defaultUrl + `/${defaultEntityController}_entity/${responsePost.data.content._id}`);
@@ -190,7 +190,7 @@ describe('Testing routing functions', function () {
             assert.fail("Cannot process entity association. Error: " + e.message);
         }
     });
-    it('Test entity assciation (CRUD) Method POST Multiple', async () => {
+    it('Test entity association (CRUD) Method POST Multiple', async () => {
         try {
             // insert multiple records (POST)
             let insertEntities = [
@@ -216,7 +216,7 @@ describe('Testing routing functions', function () {
             assert.fail("Cannot process entity association. Error: " + e.message);
         }
     });
-    it('Test entity assciation (CRUD) Method GET Multiple', async () => {
+    it('Test entity association (CRUD) Method GET Multiple', async () => {
         try {
             // get multiple entities
             let responseGetMultiple = await axios.get(defaultUrl + `/${defaultEntityController}_entity/`);
@@ -256,7 +256,7 @@ describe('Testing routing functions', function () {
             assert.fail("Cannot process entity association. Error: " + e.message);
         }
     });
-    it('Test entity assciation (CRUD) Method PUT Multiple', async () => {
+    it('Test entity association (CRUD) Method PUT Multiple', async () => {
         try {
             // update multiple records
             let responsePutMultiple = await axios.put(defaultUrl + `/${defaultEntityController}_entity/`, {
@@ -283,7 +283,7 @@ describe('Testing routing functions', function () {
             assert.fail("Cannot process entity association. Error: " + e.message);
         }
     });
-    it('Test entity assciation (CRUD) Method DELETE Multiple', async () => {
+    it('Test entity association (CRUD) Method DELETE Multiple', async () => {
         try {
             // test remove (DELETE)
             let responseDeleteMultiple = await axios.delete(defaultUrl + `/${defaultEntityController}_entity/`, {data: {"name": newProduct.name + "1"}});

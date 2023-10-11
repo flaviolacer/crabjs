@@ -61,5 +61,6 @@
 	"Entity not found on repository": "Entity not found on repository",
 	"Access denied. Invalid authentication.": "Access denied. Invalid authentication.",
 	"Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.": "Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.",
-	"Empty controller info on controller \"{{fname}} ({{file}})\". Missing module.exports?": "Empty controller info on controller \"{{fname}} ({{file}})\". Missing module.exports?"
+	"Empty controller info on controller \"{{fname}} ({{file}})\". Missing module.exports?": "Empty controller info on controller \"{{fname}} ({{file}})\". Missing module.exports?",
+	"Duplicate key error on trying to insert entity \"{{entityName}}\"": "Duplicate key error on trying to insert entity \"{{entityName}}\""
 }
