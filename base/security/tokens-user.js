@@ -102,6 +102,71 @@ class tokensUsers {
         return this;
     }
 
+    getMemoryStorage() {
+        this.securityConfig = cjs.config.security;
+        this.dictionary = {};
+
+        this.save = (clientId, token, refreshToken, expires, refreshTokenExpires) => {
+            let tokensInfo = (this.securityConfig.jwt.token_replace_new || isEmpty(this.dictionary[clientId].tokens)) ? {} : this.dictionary[clientId].tokens;
+            tokensInfo[token] = {
+                "date": new Date(),
+                "expires": expires
+            };
+            this.dictionary[clientId] = this.dictionary[clientId] || {};
+            this.dictionary[clientId].tokens = tokensInfo;
+
+            if (!isEmpty(refreshToken)) {
+                let refreshTokensInfo = (this.securityConfig.jwt.refresh_token.token_replace_new || isEmpty(this.dictionary[clientId].refreshTokens)) ? {} : this.dictionary[clientId].refreshTokens;
+                refreshTokensInfo[refreshToken] = {
+                    "date": new Date(),
+                    "expires": refreshTokenExpires
+                };
+                this.dictionary[clientId].refreshTokens = refreshTokensInfo;
+            }
+        }
+
+        this.get = (key) => {
+            return this.dictionary[key];
+        }
+
+        this.remove = async (clientId, ignoreRefreshToken) => {
+            if (!isEmpty(this.dictionary[clientId])) {
+                // add on revoked tokens
+                await revokedTokenStorage.addToken(clientId, this.dictionary[clientId].tokens);
+                // add on revoked refresh Tokens
+                if (!ignoreRefreshToken)
+                    await revokedTokenStorage.addToken(clientId, this.dictionary[clientId].refreshTokens);
+                //erase record
+                delete this.dictionary[clientId];
+                // save to storage (last generated)
+                saveFileData();
+            }
+        }
+
+        this.removeExpired = () => {
+            if (!this.dictionary) return;
+            // remove expired user tokens
+            let userClientIds = Object.keys(this.dictionary);
+            for (let i = 0, j = userClientIds.length; i < j; i++) {
+                let userInfo = this.dictionary[userClientIds[i]];
+                let tokens = extend({}, userInfo.tokens || {}, userInfo.refreshTokens || {});
+                let tokensValues = Object.keys(tokens);
+                for (let k = 0, n = tokensValues.length; k < n; k++) {
+                    let tokenInfo = tokens[tokensValues[k]];
+                    if (isString(tokenInfo.date)) tokenInfo.date = new Date(tokenInfo.date);
+                    let secondsPassed = Math.abs((new Date().getTime() - tokenInfo.date.getTime()) / 1000);
+                    if (secondsPassed >= tokenInfo.expires) {
+                        if (userInfo.tokens[tokensValues[k]])
+                            delete userInfo.tokens[tokensValues[k]]
+                        else
+                            delete userInfo.refreshTokens[tokensValues[k]];
+                    }
+                }
+            }
+        }
+        return this;
+    }
+
     getRepositoryStorage() {
         this.em = cjs.entityManager;
         this.securityConfig = cjs.config.security;
@@ -174,6 +239,8 @@ class tokensUsers {
                 return this.getFileStorage();
             case "repository":
                 return this.getRepositoryStorage();
+            case "memory":
+                return this.getMemoryStorage();
             default:
                 break;
         }

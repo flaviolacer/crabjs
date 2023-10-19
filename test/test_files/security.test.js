@@ -33,6 +33,11 @@ describe('Testing security functions and configs', function () {
         cjs.config.security.encryption_key = utils.UID(32); // random hash
         // bypass
         cjs.secBypassRoutes = ["product_bypass"];
+        // memory storage
+        cjs.config.security.security_repository = {
+            "token_storage_type" : "memory",
+            "revoke_token_storage_type" : "memory"
+        };
 
         // init server
         try {
