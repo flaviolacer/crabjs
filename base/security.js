@@ -206,6 +206,11 @@ let generateRequestToken = async function (res, apiUserAuth) {
     await removeExpiredTokens();
 }
 
+let normalizeRoute = (route) => {
+    return (route.startsWith('/') ? "" : "/") + route + (route.endsWith('/') ? "" : "/");
+}
+
+let firstRequest = true;
 
 /**
  * Check security - currently, the is only jwt security
@@ -256,7 +261,21 @@ async function security(req, res, next) {
         // secBypassRoutes
         const baseURL = req.protocol + '://' + req.headers.host + '/';
         let urlInfo = new URL(req.url, baseURL);
-        cjs.secBypassRoutes = cjs.secBypassRoutes || []; // memory allocation for url security bypass
+        urlInfo.pathname += (urlInfo.pathname[urlInfo.pathname.length - 1] === "/" ? "" : "/");
+
+        if (firstRequest) {
+            // normalize bypass routes
+            if (!isEmpty(cjs.secBypassRoutes)) {
+                let tmpRoutes = [];
+                await cjs.secBypassRoutes.forEach((route) => tmpRoutes.push(normalizeRoute(route)));
+                cjs.secBypassRoutes = tmpRoutes;
+            }
+            securityConfig.jwt.token_signin_route = normalizeRoute(securityConfig.jwt.token_signin_route);
+            if (securityConfig.auth_entity && securityConfig.auth_entity.route)
+                securityConfig.auth_entity.route = normalizeRoute(securityConfig.auth_entity.route);
+            securityConfig.jwt.refresh_token.refresh_token_route = normalizeRoute(securityConfig.jwt.refresh_token.refresh_token_route);
+            firstRequest = false;
+        }
         if ((urlInfo.pathname === securityConfig.jwt.token_signin_route)) { // auth api credencials
             if (isAuthenticated) {
                 let payload = {};
@@ -303,12 +322,12 @@ async function security(req, res, next) {
             }
             // remove expired tokens
             await removeExpiredTokens();
-        } else if (urlInfo.pathname.contains(cjs.secBypassRoutes, "/")) next();
+        } else if (urlInfo.pathname.contains(cjs.secBypassRoutes)) next();
         else { // not bypassed
             // check if token was sent using token field
             if (isAuthenticated) next();
             else {
-                let err = new Error(cjs.i18n.__("Access denied. Request not authenticaded."), 403);
+                let err = new Error(cjs.i18n.__("Access denied. Request not authenticated."), 403);
                 sendJson(res, err, 403);
             }
         }

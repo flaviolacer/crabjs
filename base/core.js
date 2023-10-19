@@ -145,7 +145,7 @@ function core() {
      */
     this.initExpress = () => {
         // set views dir and template engine
-        expressInstance.set('views', path.join(__dirname, 'views'));
+        expressInstance.set('views', path.join(cjs.config.app_root, 'views'));
         let ejs = require('ejs');
         expressInstance.engine('html', ejs.renderFile);
         expressInstance.set('view engine', 'html');

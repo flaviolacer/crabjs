@@ -16,7 +16,6 @@ function swagger() {
 
         const swaggerDocument = JSON.parse(template(cjs.config.swagger.info));
         extend(swaggerDocument, swaggerFiles);
-        cjs.secBypassRoutes = cjs.secBypassRoutes || [];
         cjs.secBypassRoutes.push(cjs.config.swagger.path.replaceAll("/", ""));
 
         let newSwaggerRoute = core.express.Router();

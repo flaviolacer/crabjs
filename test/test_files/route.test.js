@@ -6,7 +6,7 @@ const core = require("../../base/core");
 const routerManager = require('../../base/router-manager');
 const assert = require('assert');
 const axios = require('axios').default;
-const defaultUrl = "http://127.0.0.1:3000"; // default loopback
+const defaultUrl = "http://127.0.0.1:3999"; // default loopback
 const defaultController = '/product';
 const defaultEntityController = 'product';
 let newProduct;

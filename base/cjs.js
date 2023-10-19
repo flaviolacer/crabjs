@@ -4,7 +4,7 @@
 class Cjs {
     static config;
     static entityManager;
-    static secBypassRoutes;
+    static secBypassRoutes = [];
     static configSecureCredentials;
     static i18n;
     static getControllerEntityBase;

@@ -15,6 +15,7 @@ cjs.getControllerEntityBase = (entity) => {
     controllerEntityBase.__entity = cjs.entityManager.loadEntity(entity);
     return (!isEmpty(controllerEntityBase.__entity)) ? controllerEntityBase : null;
 };
+
 function routerManager() {
     let instance = this;
     let config = cjs.config;
@@ -116,6 +117,87 @@ function routerManager() {
                                     // if controller has entity tag, load controller-entity-base
                                     // save raw newControllerFileInstantiated
                                     let rawNewControllerFileInstantiated = Object.assign({}, newControllerFileInstantiated); //clone
+
+                                    // check if bypass security
+                                    if (headerAnnotationKeys.contains("nosecurity"))
+                                        cjs.secBypassRoutes.push(path.join(cjs.config.application_prefix, routesInfo.controllerRoute.data.route));
+
+                                    // define routes
+                                    for (let i = 0, j = routesInfo.routes.length; i < j; i++) {
+                                        let route = routesInfo.routes[i];
+                                        if (!route.data.method) {
+                                            log.error(cjs.i18n.__('@method not found at function "{{routeName}}" on controller "{{routeInfoName}}"\n', {
+                                                routeName: route.fname,
+                                                routeInfoName: routesInfo.controllerRoute.fname
+                                            }));
+                                            continue;
+                                        }
+                                        // check if route path was set
+                                        if (!route.data.route) {
+                                            log.error(cjs.i18n.__('@route not set at "{{routeName}}" on controller "{{routeInfoName}}"\n', {
+                                                routeName: route.fname,
+                                                routeInfoName: routesInfo.controllerRoute.fname
+                                            }));
+                                            continue;
+                                        }
+
+                                        let routerMethodFunction = newRoute[route.data.method.toLowerCase()];
+                                        if (!routerMethodFunction) {
+                                            log.warn(cjs.i18n.__('Express method function ({{method}}) not found at "{{routeName}}" on controller "{{routeInfoName}}"\n', {
+                                                method: route.data.method.toLowerCase(),
+                                                routeName: route.fname,
+                                                routeInfoName: routesInfo.controllerRoute.fname
+                                            }));
+                                            continue;
+                                        }
+
+                                        if (isEmpty(newControllerFileInstantiated[route.fname])) {
+                                            log.warn(cjs.i18n.__('Function "{{functionName}}" on controller "{{routeInfoName}} not set". Did you declared private?\n', {
+                                                functionName: route.fname,
+                                                routeInfoName: routesInfo.controllerRoute.fname
+                                            }));
+                                            continue;
+                                        }
+
+                                        // set route path to controller instantiated function
+                                        try {
+                                            // get swagger annotations
+                                            let swaggerTextVariables = {
+                                                entityName: headerAnnotations["entity"] || "",
+                                                controllerFile: path.join(rawControllerPath, file)
+                                            }
+
+                                            // swagger annotation texts
+                                            route.data.summary = utils.formatTextController(route.data.summary, swaggerTextVariables);
+                                            route.data.description = utils.formatTextController(route.data.description, swaggerTextVariables);
+
+                                            // insert on swagger document
+                                            swagger.insertRoute({
+                                                method: route.data.method.toLowerCase(),
+                                                path: path.join(headerAnnotations.route, route.data.route),
+                                                tags: [swaggerFileTag],
+                                                summary: route.data.summary || path.join(rawControllerPath, file),
+                                                description: route.data.description,
+                                                entityName: routesInfo.controllerRoute.fname
+                                            }, swaggerDocument);
+                                            // remore previous route configured
+                                            utils.removeRouteFromStack(newRoute, route.data.method.toLowerCase(), route.data.route);
+                                            // if controller entity was used then associate controller in function
+                                            let methodFunction = rawNewControllerFileInstantiated[route.fname] || rawNewControllerFileInstantiated.__proto__[route.fname];
+                                            //if (!isEmpty(controllerEntityBase.__entity) && !isEmpty(methodFunction))
+                                            //    methodFunction
+
+                                            // check bypass security on route
+                                            if (route.data.hasOwnProperty("nosecurity"))
+                                                cjs.secBypassRoutes.push(path.join(cjs.config.application_prefix, headerAnnotations.route, route.data.route));
+
+                                            newRoute[route.data.method.toLowerCase()](route.data.route, methodFunction);
+                                        } catch (e) {
+                                            log.error(e);
+                                        }
+                                    }
+
+                                    // define entity routes
                                     if (headerAnnotationKeys.contains("entity")) {
                                         let controllerEntityBase = cjs.getControllerEntityBase(headerAnnotations["entity"]);
                                         if (!isEmpty(controllerEntityBase)) {
@@ -177,77 +259,6 @@ function routerManager() {
                                                 entity: headerAnnotations["entity"],
                                                 controller: newControllerFileInstantiated.controllerName
                                             }));
-                                        }
-                                    }
-
-                                    // define routes
-                                    for (let i = 0, j = routesInfo.routes.length; i < j; i++) {
-                                        let route = routesInfo.routes[i];
-                                        if (!route.data.method) {
-                                            log.error(cjs.i18n.__('@method not found at function "{{routeName}}" on controller "{{routeInfoName}}"\n', {
-                                                routeName: route.fname,
-                                                routeInfoName: routesInfo.controllerRoute.fname
-                                            }));
-                                            continue;
-                                        }
-                                        // check if route path was set
-                                        if (!route.data.route) {
-                                            log.error(cjs.i18n.__('@route not set at "{{routeName}}" on controller "{{routeInfoName}}"\n', {
-                                                routeName: route.fname,
-                                                routeInfoName: routesInfo.controllerRoute.fname
-                                            }));
-                                            continue;
-                                        }
-
-                                        let routerMethodFunction = newRoute[route.data.method.toLowerCase()];
-                                        if (!routerMethodFunction) {
-                                            log.warn(cjs.i18n.__('Express method function ({{method}}) not found at "{{routeName}}" on controller "{{routeInfoName}}"\n', {
-                                                method: route.data.method.toLowerCase(),
-                                                routeName: route.fname,
-                                                routeInfoName: routesInfo.controllerRoute.fname
-                                            }));
-                                            continue;
-                                        }
-
-                                        if (isEmpty(newControllerFileInstantiated[route.fname])) {
-                                            log.warn(cjs.i18n.__('@function not set at "${routeName}" on controller "{{routeInfoName}}". Did you declared private?\n', {
-                                                routeName: route.fname,
-                                                routeInfoName: routesInfo.controllerRoute.fname
-                                            }));
-                                            continue;
-                                        }
-
-                                        // set route path to controller instantiated function
-                                        try {
-                                            // get swagger annotations
-                                            let swaggerTextVariables = {
-                                                entityName: headerAnnotations["entity"] || "",
-                                                controllerFile: path.join(rawControllerPath, file)
-                                            }
-
-                                            // swagger annotation texts
-                                            route.data.summary = utils.formatTextController(route.data.summary, swaggerTextVariables);
-                                            route.data.description = utils.formatTextController(route.data.description, swaggerTextVariables);
-
-                                            // insert on swagger document
-                                            swagger.insertRoute({
-                                                method: route.data.method.toLowerCase(),
-                                                path: path.join(headerAnnotations.route, route.data.route),
-                                                tags: [swaggerFileTag],
-                                                summary: route.data.summary || path.join(rawControllerPath, file),
-                                                description: route.data.description,
-                                                entityName: routesInfo.controllerRoute.fname
-                                            }, swaggerDocument);
-                                            // remore previous route configured
-                                            utils.removeRouteFromStack(newRoute, route.data.method.toLowerCase(), route.data.route);
-                                            // if controller entity was used then associate controller in function
-                                            let methodFunction = rawNewControllerFileInstantiated[route.fname] || rawNewControllerFileInstantiated.__proto__[route.fname];
-                                            //if (!isEmpty(controllerEntityBase.__entity) && !isEmpty(methodFunction))
-                                            //    methodFunction
-
-                                            newRoute[route.data.method.toLowerCase()](route.data.route, methodFunction);
-                                        } catch (e) {
-                                            log.error(e);
                                         }
                                     }
 

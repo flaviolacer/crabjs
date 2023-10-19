@@ -62,5 +62,8 @@
 	"Access denied. Invalid authentication.": "Access denied. Invalid authentication.",
 	"Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.": "Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.",
 	"Empty controller info on controller \"{{fname}} ({{file}})\". Missing module.exports?": "Empty controller info on controller \"{{fname}} ({{file}})\". Missing module.exports?",
-	"Duplicate key error on trying to insert entity \"{{entityName}}\"": "Duplicate key error on trying to insert entity \"{{entityName}}\""
+	"Duplicate key error on trying to insert entity \"{{entityName}}\"": "Duplicate key error on trying to insert entity \"{{entityName}}\"",
+	"@function not set at \"{{routeName}}\" on controller \"{{routeInfoName}}\". Did you declared private?\n": "@function not set at \"{{routeName}}\" on controller \"{{routeInfoName}}\". Did you declared private?\n",
+	"Function \"{{functionName}}\" on controller \"{{routeInfoName}} not set\". Did you declared private?\n": "Function \"{{functionName}}\" on controller \"{{routeInfoName}} not set\". Did you declared private?\n",
+	"Access denied. Request not authenticated.": "Access denied. Request not authenticated."
 }

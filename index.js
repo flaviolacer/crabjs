@@ -9,7 +9,7 @@ let routerManager = require("./base/router-manager");
 let entityManager = require("./base/entity-manager");
 const path = require("path");
 
-exports.start = function(appDir) {
+exports.start = function (appDir) {
     process.env.DEBUG = "i18n:debug";
     cjs.entityManager = null;
     // global config
@@ -28,6 +28,7 @@ exports.start = function(appDir) {
     // load entityManager to memory
     entityManager.init();
     cjs.entityManager = entityManager;
+    cjs.app = core.expressInstance;
     cjs.utils = utils;
     // return cjs object to app
     return cjs;

@@ -1,6 +1,6 @@
 {
   "server_config_filename": "crabjs.json",
-  "server_port": 3000,
+  "server_port": 3999,
   "server_https" : false,
   "server_timeout": 300000,
   "server_controllers_path": "controller",

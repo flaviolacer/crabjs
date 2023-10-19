@@ -5,7 +5,7 @@ const assert = require('assert');
 const core = require("../../base/core");
 const utils = require("../../base/utils");
 const axios = require('axios').default;
-const defaultUrl = "http://127.0.0.1:3000"; // default loopback
+const defaultUrl = "http://127.0.0.1:3999"; // default loopback
 const defaultController = '/product';
 const security = {...require("../../defaults.json").security};
 const defaultClientIdField = security.jwt.sign_client_id_field;
@@ -23,6 +23,7 @@ describe('Testing security functions and configs', function () {
     // removing timeout from test phase
     this.timeout(0);
     it('Config credential test', async () => {
+        cjs.config = cjs.config || {};
         // set security
         cjs.config.security = {...require("../../defaults.json").security};
         // set credentials to test
@@ -89,6 +90,14 @@ describe('Testing security functions and configs', function () {
     it('Test BYPASS security access', async () => {
         try {
             let response = await axios.get(defaultUrl + defaultController + "_bypass/");
+            assert.equal(response.data, "ok", "Failed request using method 'GET'. Different response returned.")
+        } catch (e) {
+            assert.fail("Failed request using method 'GET':" + e.message);
+        }
+    });
+    it('Test BYPASS security tag method "@nosecurity" access', async () => {
+        try {
+            let response = await axios.get(defaultUrl + defaultController + "_bypass_tag/");
             assert.equal(response.data, "ok", "Failed request using method 'GET'. Different response returned.")
         } catch (e) {
             assert.fail("Failed request using method 'GET':" + e.message);
