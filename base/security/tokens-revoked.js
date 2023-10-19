@@ -8,6 +8,35 @@ class tokensRevoked {
     type = "file";
     entity = "__revoked_storage";
 
+    getMemoryStorage() {
+        this.dictionary = {};
+
+        this.save = (clientId, key, value) => {
+            value.client_id = clientId;
+            this.dictionary[key] = value;
+        }
+
+        this.get = (key) => {
+            return this.dictionary[key];
+        }
+
+        this.remove = (key) => {
+            delete this.dictionary[key];
+        }
+
+        this.removeExpired = () => {
+            // remove revoked tokens
+            let tokenRevokedKeys = Object.keys(this.dictionary);
+            for (let i = 0, j = tokenRevokedKeys.length; i < j; i++) {
+                let tokenRevokedInfo = this.dictionary[tokenRevokedKeys[i]];
+                if (isString(tokenRevokedInfo.date)) tokenRevokedInfo.date = new Date(tokenRevokedInfo.date);
+                let secondsRevokedPassed = Math.abs((new Date().getTime() - tokenRevokedInfo.date.getTime()) / 1000);
+                if (secondsRevokedPassed >= tokenRevokedInfo.expires) delete this.dictionary[tokenRevokedKeys[i]];
+            }
+        }
+        return this;
+    }
+
     getFileStorage() {
         this.dictionary = {};
         this.filename = !isEmpty(cjs.config.token_storage.revoked_filename) ? cjs.config.token_storage.revoked_filename : "rtoken.json";
@@ -97,6 +126,8 @@ class tokensRevoked {
                 return this.getFileStorage();
             case "repository":
                 return this.getRepositoryStorage();
+            case "memory":
+                return this.getMemoryStorage();
             default:
                 break;
         }

@@ -27,7 +27,7 @@ let checkOAuth2Auth = async (req) => {
     let testClientId = query[securityConfig.jwt.sign_client_id_field] || body[securityConfig.jwt.sign_client_id_field] || headers[securityConfig.jwt.sign_client_id_field];
     let testClientSecret = query[securityConfig.jwt.sign_client_secret_field] || body[securityConfig.jwt.sign_client_secret_field] || headers[securityConfig.jwt.sign_client_secret_field];
 
-    if (!securityConfig.security_repository) { // config auth api
+    if (!securityConfig.security_repository || securityConfig.security_repository.token_storage_type === "memory") { // config auth api
         if (isEmpty(cjs.configSecureCredentials)) {
             let configCredentials = securityConfig.credentials || [];
 
