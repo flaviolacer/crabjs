@@ -5,6 +5,8 @@
   "server_timeout": 300000,
   "server_controllers_path": "controller",
   "server_entities_path": "entity",
+  "multer_path": "uploads/",
+  "multer_inmemory": true,
   "debug": {
     "level": "error"
   },

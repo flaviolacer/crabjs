@@ -21,7 +21,7 @@ function ControllerEntityBase() {
                 if (!isEmpty(filter)) { // update registry
                     if (isEmpty(this.__entity.__definitions.primaryKeys)) {
                         utils.responseError(res, `Error on update object. No defined primary key on entity: ${this.__entity.entityName}`);
-                        return;
+                        return false;
                     }
                     // get first primary key
                     let primaryKey = this.__entity.__definitions.primaryKeys[0].fname;
@@ -60,17 +60,19 @@ function ControllerEntityBase() {
                         utils.responseError(res, cjs.i18n.__('Error on insert or update object. {{saveErrorMessage}}', {
                             saveErrorMessage: errorMessage
                         }), errorCode, errorReferenceCode);
-                        return;
+                        return false;
                     }
                 }
             } else {
                 record = await em.insertBatch(this.__entity.entityName, req.body);
             }
             utils.responseData(res, record);
+            return true;
         } else {
             utils.responseError(res, cjs.i18n.__('Error on save object. No defined body to save on entity: {{entityName}}', {
                 entityName: this.__entity.entityName
             }), 406);
+            return false;
         }
     };
 

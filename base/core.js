@@ -1,11 +1,12 @@
 const path = require("path");
 const express = require('express');
+const multer = require('multer');
 const http = require("http");
 const https = require("https");
 const log = require("./log");
 let cjs = require("./cjs");
 const fs = require("fs");
-const { I18n } = require('i18n')
+const { I18n } = require('i18n');
 
 function core() {
     /**
@@ -156,6 +157,9 @@ function core() {
         expressInstance.use(bodyParser.urlencoded({
             extended: true
         }));
+
+        // upload files middleware
+        expressInstance.use(multer({dest: path.join(cjs.config.app_root, cjs.config.multer_path), inMemory: cjs.config.multer_inmemory}).any());
 
         // log request content
         expressInstance.use(require('./request-info')());

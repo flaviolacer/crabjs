@@ -84,11 +84,12 @@ global.isBoolean = function(val) {
 global.extend = function (target) {
     if (target == null) return;
     let sources = [].slice.call(arguments, 1);
-    sources.forEach(function (source) {
+    for(let i = 0, j = sources.length;i<j;i++) {
+        let source = sources[i];
         for (let prop in source) {
             target[prop] = source[prop];
         }
-    });
+    }
     return target;
 };
 

@@ -53,6 +53,7 @@ function Util() {
     }
 
     this.responseData = function (res, content, params) {
+        if (res.headersSent) return;
         let response = {
             content: content
         };
@@ -73,12 +74,22 @@ function Util() {
 
     this.removeRouteFromStack = (app, method, path) => {
         let routeStack = app.stack || [];
-        for (let i = 0, j = routeStack.length; i < j; i++) {
-            if (routeStack[i].route && routeStack[i].route.path === path && routeStack[i].route.methods[method]) {
-                routeStack.splice(i, 1);
-                return;
-            }
+        if (path.contains(':')) {
+            let infoPath = path.split(':');
+            path = infoPath[0]+":";
+            for (let i = 0, j = routeStack.length; i < j; i++)
+                if (routeStack[i].route && routeStack[i].route.path.startsWith(path) && routeStack[i].route.methods[method]) {
+                    routeStack.splice(i, 1);
+                    return;
+                }
+        } else {
+            for (let i = 0, j = routeStack.length; i < j; i++)
+                if (routeStack[i].route && routeStack[i].route.path === path && routeStack[i].route.methods[method]) {
+                    routeStack.splice(i, 1);
+                    return;
+                }
         }
+
     }
 
     this.formatTextController = (text, params) => {

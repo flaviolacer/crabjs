@@ -1,7 +1,7 @@
 {
   "name": "crabjs",
   "version": "1.0.8",
-  "repository":"https://github.com/flaviolacer/crabjs",
+  "repository": "https://github.com/flaviolacer/crabjs",
   "author": "Flavio Lacerda",
   "homepage": "https://github.com/flaviolacer/crabjs",
   "bin": {
@@ -20,6 +20,7 @@
     "mocha": "^10.2.0",
     "mongodb": "^5.1.0",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "path": "^0.12.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^4.6.2"

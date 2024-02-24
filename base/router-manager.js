@@ -122,6 +122,71 @@ function routerManager() {
                                     if (headerAnnotationKeys.contains("nosecurity"))
                                         cjs.secBypassRoutes.push(path.join(cjs.config.application_prefix, routesInfo.controllerRoute.data.route));
 
+                                    // define entity routes
+                                    if (headerAnnotationKeys.contains("entity")) {
+                                        let controllerEntityBase = cjs.getControllerEntityBase(headerAnnotations["entity"]);
+                                        if (!isEmpty(controllerEntityBase)) {
+                                            newControllerFileInstantiated = extend(newControllerFileInstantiated, controllerEntityBase);
+
+                                            // create route mappings - restful pattern
+                                            let default_methods = ["get", "post", "put", "delete"];
+                                            for (let i = 0, j = default_methods.length; i < j; i++) {
+                                                let method = default_methods[i];
+                                                if (!isEmpty(newControllerFileInstantiated["__" + method])) {
+                                                    let methodActionTxt = "return";
+                                                    try {
+                                                        switch (method.toLowerCase()) {
+                                                            case "post":
+                                                                methodActionTxt = "insert";
+                                                                break;
+                                                            case "put":
+                                                                methodActionTxt = "update";
+                                                                break;
+                                                            case "delete":
+                                                                methodActionTxt = "remove";
+                                                                break;
+                                                            default:
+                                                        }
+
+                                                        let swaggerOptions = {
+                                                            method: method,
+                                                            path: path.join(headerAnnotations.route, "/"),
+                                                            tags: [swaggerFileTag],
+                                                            summary: headerAnnotations["sw" + method.toLowerCase() + "summary"] || cjs.i18n.__("This method {{methodAction}} {{entityName}} entitie(s).", {
+                                                                "methodAction": methodActionTxt,
+                                                                "entityName": routesInfo.controllerRoute.fname
+                                                            }),
+                                                            description: headerAnnotations["sw" + method.toLowerCase() + "description"],
+                                                            entityName: routesInfo.controllerRoute.fname
+                                                        };
+
+                                                        swagger.insertRoute(swaggerOptions, swaggerDocument);
+
+                                                        if (method === "get" || method === "put" || method === "delete") {
+                                                            newRoute[method]("/:filter", newControllerFileInstantiated["__" + method]);
+                                                            swaggerOptions.path = path.join(headerAnnotations.route, "/:filter");
+                                                            // insert route on swagger
+                                                            swaggerOptions.summary = headerAnnotations["sw" + method.toLowerCase() + "summaryfilter"] || swaggerOptions.summary;
+                                                            swaggerOptions.description = headerAnnotations["sw" + method.toLowerCase() + "descriptionfilter"] || swaggerOptions.description;
+                                                            swagger.insertRoute(swaggerOptions, swaggerDocument);
+                                                        }
+                                                        newRoute[method]("/", newControllerFileInstantiated["__" + method]);
+                                                    } catch (e) {
+                                                        log.error(cjs.i18n.__('Cannot associate default entity methods to controller "{{controller}}". Missing default functions ou wrong functions format?', {
+                                                            controller: newControllerFileInstantiated.controllerName
+                                                        }));
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            log.error(cjs.i18n.__('Entity "{{entity}}" not found on association to controller "{{controller}}". Missing entity on dir?', {
+                                                entity: headerAnnotations["entity"],
+                                                controller: newControllerFileInstantiated.controllerName
+                                            }));
+                                        }
+                                    }
+
                                     // define routes
                                     for (let i = 0, j = routesInfo.routes.length; i < j; i++) {
                                         let route = routesInfo.routes[i];
@@ -188,77 +253,19 @@ function routerManager() {
                                             //    methodFunction
 
                                             // check bypass security on route
-                                            if (route.data.hasOwnProperty("nosecurity"))
-                                                cjs.secBypassRoutes.push(path.join(cjs.config.application_prefix, headerAnnotations.route, route.data.route));
+                                            if (route.data.hasOwnProperty("nosecurity")) {
+                                                let routeData = route.data.route;
+                                                let routeLastData = "";
+                                                if (routeData.contains(':')) {
+                                                    routeData = routeData.split(':')[0];
+                                                    routeLastData = ".";
+                                                }
+                                                cjs.secBypassRoutes.push(path.join(cjs.config.application_prefix, headerAnnotations.route, routeData) + routeLastData);
+                                            }
 
                                             newRoute[route.data.method.toLowerCase()](route.data.route, methodFunction);
                                         } catch (e) {
                                             log.error(e);
-                                        }
-                                    }
-
-                                    // define entity routes
-                                    if (headerAnnotationKeys.contains("entity")) {
-                                        let controllerEntityBase = cjs.getControllerEntityBase(headerAnnotations["entity"]);
-                                        if (!isEmpty(controllerEntityBase)) {
-                                            newControllerFileInstantiated = extend(newControllerFileInstantiated, controllerEntityBase);
-
-                                            // create route mappings - restful pattern
-                                            let default_methods = ["get", "post", "put", "delete"];
-                                            for (let i = 0, j = default_methods.length; i < j; i++) {
-                                                let method = default_methods[i];
-                                                if (!isEmpty(newControllerFileInstantiated["__"+method])) {
-                                                    let methodActionTxt = "return";
-                                                    try {
-                                                        switch (method.toLowerCase()) {
-                                                            case "post":
-                                                                methodActionTxt = "insert";
-                                                                break;
-                                                            case "put":
-                                                                methodActionTxt = "update";
-                                                                break;
-                                                            case "delete":
-                                                                methodActionTxt = "remove";
-                                                                break;
-                                                            default:
-                                                        }
-
-                                                        let swaggerOptions = {
-                                                            method: method,
-                                                            path: path.join(headerAnnotations.route, "/"),
-                                                            tags: [swaggerFileTag],
-                                                            summary: headerAnnotations["sw" + method.toLowerCase() + "summary"] || cjs.i18n.__("This method {{methodAction}} {{entityName}} entitie(s).", {
-                                                                "methodAction": methodActionTxt,
-                                                                "entityName": routesInfo.controllerRoute.fname
-                                                            }),
-                                                            description: headerAnnotations["sw" + method.toLowerCase() + "description"],
-                                                            entityName: routesInfo.controllerRoute.fname
-                                                        };
-
-                                                        swagger.insertRoute(swaggerOptions, swaggerDocument);
-
-                                                        if (method === "get" || method === "put" || method === "delete") {
-                                                            newRoute[method]("/:filter", newControllerFileInstantiated["__"+method]);
-                                                            swaggerOptions.path = path.join(headerAnnotations.route, "/:filter");
-                                                            // insert route on swagger
-                                                            swaggerOptions.summary = headerAnnotations["sw" + method.toLowerCase() + "summaryfilter"] || swaggerOptions.summary;
-                                                            swaggerOptions.description = headerAnnotations["sw" + method.toLowerCase() + "descriptionfilter"] || swaggerOptions.description;
-                                                            swagger.insertRoute(swaggerOptions, swaggerDocument);
-                                                        }
-                                                        newRoute[method]("/", newControllerFileInstantiated["__"+method]);
-                                                    } catch (e) {
-                                                        log.error(cjs.i18n.__('Cannot associate default entity methods to controller "{{controller}}". Missing default functions ou wrong functions format?', {
-                                                            controller: newControllerFileInstantiated.controllerName
-                                                        }));
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            log.error(cjs.i18n.__('Entity "{{entity}}" not found on association to controller "{{controller}}". Missing entity on dir?', {
-                                                entity: headerAnnotations["entity"],
-                                                controller: newControllerFileInstantiated.controllerName
-                                            }));
                                         }
                                     }
 

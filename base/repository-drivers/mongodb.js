@@ -294,7 +294,7 @@ function mongoDB() {
                 try {
                     if (!isEmpty(entity[fieldRef]))
                         entityPersistInfo[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
-                    else if (!isEmpty(fields[fieldRef].defaultValue))
+                    else if (!isEmpty(fields[fieldRef].defaultValue) && isEmpty(filter))
                         fieldDefaultValues[fieldName] = this.setType(fields[fieldRef].defaultValue, fields[fieldRef].type);
                 } catch (e) {
                     log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.", {
