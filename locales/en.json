@@ -65,5 +65,6 @@
 	"Duplicate key error on trying to insert entity \"{{entityName}}\"": "Duplicate key error on trying to insert entity \"{{entityName}}\"",
 	"@function not set at \"{{routeName}}\" on controller \"{{routeInfoName}}\". Did you declared private?\n": "@function not set at \"{{routeName}}\" on controller \"{{routeInfoName}}\". Did you declared private?\n",
 	"Function \"{{functionName}}\" on controller \"{{routeInfoName}} not set\". Did you declared private?\n": "Function \"{{functionName}}\" on controller \"{{routeInfoName}} not set\". Did you declared private?\n",
-	"Access denied. Request not authenticated.": "Access denied. Request not authenticated."
+	"Access denied. Request not authenticated.": "Access denied. Request not authenticated.",
+	"Annotation \"@Controller\" not found on controller file \"{{file}}\"": "Annotation \"@Controller\" not found on controller file \"{{file}}\""
 }

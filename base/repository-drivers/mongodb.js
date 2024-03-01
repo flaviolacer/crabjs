@@ -33,6 +33,35 @@ function mongoDB() {
             }
     }
 
+    let translateFilter = (filter) => {
+        if (isEmpty(filter))
+            return null;
+        let filterKeys = Object.keys(filter);
+        for (let i = 0, j = filterKeys.length; i < j; i++) {
+            let filterKey = filterKeys[i];
+            let filterValue = filter[filterKey];
+            if (isString(filterValue) && filterValue.trim().startsWith("{")) { // possibli JSON
+                try {
+                    let filterValueParsed = JSON.parse(filterValue);
+                    let fieldValueKeys = Object.keys(filterValueParsed);
+                    for (var k = 0, l = fieldValueKeys.length; k < l; k++) {
+                        let filterValueKey = fieldValueKeys[k];
+                        if (filterValueKey.startsWith("__")) { // future in case need
+                            switch (filterValueKey) {
+                                case "__like":
+                                case "__regex":
+                                    filter[filterKey] = new RegExp(filterValueParsed[filterValueKey], "i");
+                                    break;
+                            }
+                        }
+                    }
+                } catch (e) { // not a json object, so continue
+
+                }
+            }
+        }
+    };
+
     this.setType = (value, type) => {
         type = type || "";
         switch (type.toLowerCase().trim()) {
@@ -150,6 +179,16 @@ function mongoDB() {
 
             // check if $match already exists
             const found = pipeline.some(fi => !isEmpty(fi.$match));
+
+            // translate filter functions
+            translateFilter(filter);
+
+            // filter - options
+            if (!isEmpty(filter["__page"])) {
+                options.page_number = parseInt(filter["__page"]);
+                delete filter["__page"];
+            }
+
             if (!found) pipeline.push({$match: filter});
 
             // create pipeline for count
