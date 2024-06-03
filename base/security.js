@@ -201,9 +201,13 @@ let generateRequestToken = async function (res, apiUserAuth) {
 
     response.token_type = "bearer";
 
-    sendJson(res, response, 200);
     // remove expired tokens
     await removeExpiredTokens();
+
+    if (!isEmpty(res))
+        sendJson(res, response, 200);
+    else
+        return response;
 }
 
 let normalizeRoute = (route) => {
@@ -219,6 +223,30 @@ let firstRequest = true;
  * @param next
  */
 async function security(req, res, next) {
+
+    /*
+    * Force authentication
+    */
+    this.forceRepositoryUserAuthentication = async (userdata) => {
+        let credentialSearchFields = {};
+        let ae = securityConfig.auth_entity;
+        securityConfig.auth_entity.request_username_field = securityConfig.auth_entity.request_username_field || securityConfig.auth_entity.username_field;
+        credentialSearchFields[securityConfig.auth_entity.username_field] = userdata;
+        let em = cjs.entityManager;
+        let credential = await em.getEntity(ae.entity_name, credentialSearchFields);
+        if (credential) {
+            let authInfo = {};
+            authInfo.authUser = credential[securityConfig.auth_entity.username_field];
+            authInfo.authId = credential._id;
+
+            return await generateRequestToken(null, authInfo);
+        } else {
+            return null;
+        }
+    };
+
+    if (isEmpty(req) || isEmpty(res)) return this;
+
     if (cjs.config.security && cjs.config.security.jwt) {
         securityConfig = cjs.config.security;
 

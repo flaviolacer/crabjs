@@ -7,7 +7,7 @@ let RequestInfo = function () {
                req.body.__files = req.files;
         content = extend(content, req.body, req.params);
 
-        log.info(req.method + ' ' + req.url + ' ' + 'content:' + JSON.stringify(content));
+        log.info(`${req.method} ${req.url} content: ${JSON.stringify(content)}`);
         next();
     };
 };

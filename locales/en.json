@@ -66,5 +66,17 @@
 	"@function not set at \"{{routeName}}\" on controller \"{{routeInfoName}}\". Did you declared private?\n": "@function not set at \"{{routeName}}\" on controller \"{{routeInfoName}}\". Did you declared private?\n",
 	"Function \"{{functionName}}\" on controller \"{{routeInfoName}} not set\". Did you declared private?\n": "Function \"{{functionName}}\" on controller \"{{routeInfoName}} not set\". Did you declared private?\n",
 	"Access denied. Request not authenticated.": "Access denied. Request not authenticated.",
-	"Annotation \"@Controller\" not found on controller file \"{{file}}\"": "Annotation \"@Controller\" not found on controller file \"{{file}}\""
+	"Annotation \"@Controller\" not found on controller file \"{{file}}\"": "Annotation \"@Controller\" not found on controller file \"{{file}}\"",
+	"Undefined error on trying to find and update entity \"{{entityName}}\"": "Undefined error on trying to find and update entity \"{{entityName}}\"",
+	"Undefined error on trying to convert type definitions of entity \"{{entityName}}\"": "Undefined error on trying to convert type definitions of entity \"{{entityName}}\"",
+	"Get entity from repository __access_credential": "Get entity from repository __access_credential",
+	"Get entity from repository __revoked_storage": "Get entity from repository __revoked_storage",
+	"Get entity from repository user": "Get entity from repository user",
+	"Get entity from repository store": "Get entity from repository store",
+	"Get entity from repository product": "Get entity from repository product",
+	"Get entity from repository __access_storage": "Get entity from repository __access_storage",
+	"Could not save data in repository.": "Could not save data in repository.",
+	"Get entity from repository api_credential": "Get entity from repository api_credential",
+	"Need to specify the filter to save the entity.": "Need to specify the filter to save the entity.",
+	"Get entity from repository code_request": "Get entity from repository code_request"
 }

@@ -70,6 +70,14 @@ describe('Testing routing functions', function () {
             assert.fail("Failed request using method 'GET':" + e.message);
         }
     });
+    it('Test priority order of annotations. Should return "ok"', async () => {
+        try {
+            let response = await axios.get(defaultUrl + defaultController + "/priority");
+            assert.equal(response.data, "ok", "Failed request using method 'GET'. Different response returned.")
+        } catch (e) {
+            assert.fail("Failed request using method 'GET':" + e.message);
+        }
+    });
     it('Test setup param :id. Should return the value sent in path', async () => {
         try {
             let response = await axios.get(defaultUrl + defaultController + "/value");

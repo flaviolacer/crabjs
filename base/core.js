@@ -6,7 +6,7 @@ const https = require("https");
 const log = require("./log");
 let cjs = require("./cjs");
 const fs = require("fs");
-const { I18n } = require('i18n');
+const {I18n} = require('i18n');
 
 function core() {
     /**
@@ -17,6 +17,7 @@ function core() {
     let expressInstance = this.expressInstance;
     this.server = null;
     let instance = this;
+    this.security = null;
 
     /**
      * Start express server on predfined ports
@@ -60,6 +61,7 @@ function core() {
         this.server.listen(port);
         this.server.on('error', onError);
         this.server.on('listening', onListening);
+
         /**
          * Normalize a port into a number, string, or false.
          */
@@ -116,10 +118,10 @@ function core() {
                 ? 'pipe ' + addr
                 : addr.port;
             let host = addr.address;
-            let localAddresses = ['::','127.0.0.1'];
+            let localAddresses = ['::', '127.0.0.1'];
             host = (!isEmpty(cjs.config.server_hostname)) ? "http://" + cjs.config.server_hostname : (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
             if (cjs.config.server_https)
-                host = host.replace("http","https");
+                host = host.replace("http", "https");
 
             cjs.config.host_address = host;
             if (bind !== "80" && bind !== "443")
@@ -158,11 +160,19 @@ function core() {
             extended: true
         }));
 
-        // upload files middleware
-        expressInstance.use(multer({dest: path.join(cjs.config.app_root, cjs.config.multer_path), inMemory: cjs.config.multer_inmemory}).any());
-
         // log request content
         expressInstance.use(require('./request-info')());
+
+        // set security
+        let Security = require("./security");
+        instance.security = Security;
+        expressInstance.use(Security);
+
+        // upload files middleware
+        expressInstance.use(multer({
+            dest: path.join(cjs.config.app_root, cjs.config.multer_path),
+            inMemory: cjs.config.multer_inmemory
+        }).any());
 
         expressInstance.use((req, res, next) => {
             bodyParser.json()(req, res, err => {
@@ -178,8 +188,6 @@ function core() {
         //expressInstance.use(logger('Response time\: :response-time\\n'));
         // catch not found
         // start server
-        // set security
-        expressInstance.use(require("./security"));
         this.startServer();
     }
 
@@ -187,12 +195,12 @@ function core() {
      * Load custom config
      */
     this.loadCustomConfig = () => {
-        let customConfigFilename = path.join(cjs.config.app_root,cjs.config.server_config_filename);
+        let customConfigFilename = path.join(cjs.config.app_root, cjs.config.server_config_filename);
         if (fs.existsSync(customConfigFilename)) {
             let custom_config;
             try {
                 custom_config = require(customConfigFilename);
-            } catch(e) {
+            } catch (e) {
                 log.error(cjs.i18n.__("Error on loading config file {{configFilename}}. Check the file format.", {configFilename: cjs.config.server_config_filename}));
                 return;
             }

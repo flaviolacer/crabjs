@@ -29,6 +29,7 @@ exports.start = function (appDir) {
     entityManager.init();
     cjs.entityManager = entityManager;
     cjs.app = core.expressInstance;
+    cjs.security = core.security;
     cjs.utils = utils;
     // return cjs object to app
     return cjs;

@@ -38,6 +38,7 @@ function Util() {
     };
 
     this.responseError = function (res, message, code, data) {
+        code = code || 500;
         let ResponseError = require("./response-error");
         let responseError = new ResponseError(message, code);
         responseError.type = "error";
@@ -89,7 +90,18 @@ function Util() {
                     return;
                 }
         }
+    }
 
+    this.sendRouteToFirstOnMethod = (app, method) => {
+        let routeStack = app.stack || [];
+        if (routeStack.length <= 1) return;
+        let lastStackValue = app.stack.pop();
+        for (let i = 0, j = routeStack.length; i < j; i++)
+            if (routeStack[i].route.methods[method] && lastStackValue.route.methods[method]) {
+                app.stack.splice(i, 0, lastStackValue);
+                return;
+            }
+        app.stack.push(lastStackValue);
     }
 
     this.formatTextController = (text, params) => {

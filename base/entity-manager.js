@@ -261,7 +261,7 @@ function entityManager() {
                 resolve(null);
                 return;
             }
-            log.info(cjs.i18n.__("Get entity from repository"));
+            log.info(cjs.i18n.__(`Get entity from repository ${entity}`));
 
             let entityDefinitions = getEntityDefinition(entity);
             if (!entityDefinitions) {
@@ -354,6 +354,65 @@ function entityManager() {
             }
         });
     };
+
+    /**
+     * Update entity in repository
+     * @param entity
+     * @param filter
+     * @param data
+     * @returns {Promise<unknown>}
+     */
+    this.saveEntity = (entity, filter, data) => {
+        filter = filter || {};
+        // convert array to object
+        if (isArray(filter))
+            filter = Object.assign({}, filter);
+
+        return new Promise(async (resolve, reject) => {
+            if (isEmpty(entity)) {
+                log.error(cjs.i18n.__("Need to specify the entity to save data."));
+                log.trace("error");
+                resolve(null);
+                return;
+            }
+
+            if (isEmpty(data)) {
+                log.error(cjs.i18n.__("Need to specify the data to save the entity."));
+                log.trace("error");
+                resolve(null);
+                return;
+            }
+
+            let entityDefinitions = getEntityDefinition(entity);
+            if (!entityDefinitions) {
+                log.error(cjs.i18n.__("Entity not defined. Did you missed the file on directory?"));
+                reject(false);
+                return false;
+            }
+            let entityData = null;
+            data.__definitions = entityDefinitions;
+            try {
+                entityData = await repositoryManager.save({
+                    repository: entityDefinitions.entity.repository,
+                    entity: data,
+                    definitions: entityDefinitions,
+                    filter: filter
+                });
+
+                if (!isEmpty(entityData) && (entityData !== false)) {
+                    log.info("Data retrived:", entityData);
+                    resolve(this.newEntity(entity, entityData));
+                } else {
+                    log.info(cjs.i18n.__("Entity not saved on repository"));
+                    resolve(null);
+                }
+            } catch (e) {
+                log.error(cjs.i18n.__("Could not save data in repository."));
+                log.error(e);
+                reject(e);
+            }
+        });
+    }
 
     /**
      * Remove entities from repository

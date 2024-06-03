@@ -29,7 +29,7 @@ function mongoDB() {
                     fields[fieldKey] = this.setType(fields[whereKeys[i]], definitions.fields[whereKeys[i]].type);
                     delete fields[whereKeys[i]];
                 } else
-                    fields[fieldKey] = this.setType(fields[whereKeys[i]], definitions.fields[whereKeys[i]].type);
+                    fields[fieldKey] = this.setType(fields[fieldKey], definitions.fields[fieldKey].type);
             }
     }
 
@@ -40,7 +40,20 @@ function mongoDB() {
         for (let i = 0, j = filterKeys.length; i < j; i++) {
             let filterKey = filterKeys[i];
             let filterValue = filter[filterKey];
-            if (isString(filterValue) && filterValue.trim().startsWith("{")) { // possibli JSON
+            if (filterKey.startsWith("__")) {
+                switch (filterKey) {
+                    case "__remove":
+                        filter['$unset'] = {};
+                        if (isString(filter["__remove"]))
+                            filter['$unset'][filter["__remove"]] = "";
+                        else if (isArray(filter["__remove"]))
+                            for (let i = 0; i < filter["__remove"].length; i++)
+                                filter['$unset'][filter["__remove"][i]] = ""
+
+                        delete filter[filterKey];
+                        break;
+                }
+            } else if (isString(filterValue) && filterValue.trim().startsWith("{")) { // possibli JSON
                 try {
                     let filterValueParsed = JSON.parse(filterValue);
                     let fieldValueKeys = Object.keys(filterValueParsed);
@@ -168,7 +181,7 @@ function mongoDB() {
             } catch (e) {
                 log.error(e.message);
                 reject({
-                    error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: params.entity}),
+                    error_message: cjs.i18n.__("Undefined error on trying to convert type definitions of entity \"{{entityName}}\"", {entityName: params.entity}),
                     error_code: Constants.UNDEFINED_ERROR
                 });
                 return;
@@ -265,7 +278,7 @@ function mongoDB() {
                 log.error(e.message);
                 reject({
                     error: true,
-                    error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: options.entity}),
+                    error_message: cjs.i18n.__("Undefined error on trying to convert type definitions of entity \"{{entityName}}\"", {entityName: options.entity}),
                     error_code: Constants.UNDEFINED_ERROR
                 });
             }
@@ -286,6 +299,9 @@ function mongoDB() {
     this.save = (options) => {
         let entity = options.entity;
         let fields = entity.__definitions.fields;
+
+        // translate persist functions
+        translateFilter(options.entity);
 
         // conditions on insert
         let filter = options.filter || {};
@@ -313,8 +329,15 @@ function mongoDB() {
             let fieldsKeys = Object.keys(entity.__definitions.fields);
             let entityPersistInfo = {};
             let fieldDefaultValues = {};
+            let specialFields = ['$unset'];
+            fieldsKeys = fieldsKeys.concat(specialFields);
             for (let i = 0, j = fieldsKeys.length; i < j; i++) {
                 let fieldRef = fieldsKeys[i];
+                if (fieldRef.startsWith('$')) { // command field
+                    if (!isEmpty(entity[fieldRef]))
+                        entityPersistInfo[fieldRef] = entity[fieldRef];
+                    continue;
+                }
                 let fieldName = (isEmpty(fields[fieldRef].field)) ? fieldRef : fields[fieldRef].field;
                 if (typeof fields[fieldRef].required !== "undefined" && isEmpty(entity[fieldRef]) && isEmpty(filter) || (!isEmpty(filter) && entity.hasOwnProperty(fieldRef) && isEmpty(entity[fieldRef]))) { // required fields
                     log.error(cjs.i18n.__("Required field \"{{fieldName}}\" was not set on entity \"{{entityName}}\"", {
@@ -402,7 +425,7 @@ function mongoDB() {
                         error_entity: entity.entityName
                     });
                 });
-            } else {
+            } else { // update data
                 try {
                     // convert field names
                     convertFieldsToTypeDefinitions(filter, entity.__definitions);
@@ -410,15 +433,21 @@ function mongoDB() {
                     log.error(e.message);
                     reject({
                         error: true,
-                        error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: entity.entityName}),
+                        error_message: cjs.i18n.__("Undefined error on trying to convert type definitions of entity \"{{entityName}}\"", {entityName: entity.entityName}),
                         error_code: Constants.UNDEFINED_ERROR
                     });
                 }
 
                 // persist data and return the modified
+                let updateContent = {};
+                if (!isEmpty(entityPersistInfo['$unset'])) {
+                    updateContent['$unset'] = entityPersistInfo['$unset'];
+                    delete entityPersistInfo['$unset'];
+                }
+                updateContent['$set'] = entityPersistInfo;
                 if (filter.__update_multiple) {
                     delete filter.__update_multiple;
-                    await db.collection(collectionName).updateMany(filter, {$set: entityPersistInfo}, {
+                    await db.collection(collectionName).updateMany(filter, updateContent, {
                         writeConcern: {
                             w: 1,
                             j: true
@@ -436,8 +465,8 @@ function mongoDB() {
                     });
                 } else
                     try {
-                        let ret = await db.collection(collectionName).findOneAndUpdate(filter, {$set: entityPersistInfo}, {
-                            upsert: true, returnNewDocument: true
+                        let ret = await db.collection(collectionName).findOneAndUpdate(filter, updateContent, {
+                            upsert: true, returnNewDocument: true, returnDocument: 'after', writeConcern: {w: 1, j: 1}
                         });
                         resolve(ret.value);
                         return ret;

@@ -74,6 +74,17 @@ function product() {
     function test8(req, res) {
         res.send(req.params.id);
     }
+
+    /**
+     * Test default function to be before all annotations
+     *  @method('GET')
+     *  @route('/priority')
+     *  @priority
+     */
+    this.test9 = function (req, res) {
+        res.send("ok");
+    }
+
 }
 
 module.exports = product;

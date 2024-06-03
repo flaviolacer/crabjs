@@ -264,6 +264,8 @@ function routerManager() {
                                             }
 
                                             newRoute[route.data.method.toLowerCase()](route.data.route, methodFunction);
+                                            if (route.data.hasOwnProperty("priority"))
+                                                utils.sendRouteToFirstOnMethod(newRoute, route.data.method.toLowerCase());
                                         } catch (e) {
                                             log.error(e);
                                         }
