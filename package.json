@@ -13,7 +13,7 @@
     "dotenv-defaults": "^5.0.2",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
-    "flat": "^6.0.1",
+    "flat": "^5.0.2",
     "handlebars": "^4.7.8",
     "i18n": "^0.15.1",
     "jsonwebtoken": "^9.0.2",

@@ -157,7 +157,7 @@ describe('Testing routing functions', function () {
                 description: newProduct.description
             });
             if (isEmpty(responsePut.data)) {
-                let error = new Error("Cannot make request");
+                let error = new Error("Error on PUT request. Empty data retrieved.");
                 error.code = "ERR_EMPTY";
                 throw error;
             }

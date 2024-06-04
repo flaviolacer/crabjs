@@ -13,8 +13,6 @@ function mongoDB() {
     let default_options = {
         maxPoolSize: 10,
         wtimeoutMS: 2500,
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
         connectTimeoutMS: 5000,
         serverSelectionTimeoutMS: 5000
     };
@@ -468,7 +466,7 @@ function mongoDB() {
                         let ret = await db.collection(collectionName).findOneAndUpdate(filter, updateContent, {
                             upsert: true, returnNewDocument: true, returnDocument: 'after', writeConcern: {w: 1, j: 1}
                         });
-                        resolve(ret.value);
+                        resolve(ret);
                         return ret;
                     } catch (e) {
                         if (e.code === 66)
