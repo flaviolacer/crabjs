@@ -161,7 +161,7 @@ function mongoDB() {
         });
     };
 
-    this.find = async (params) => {
+    this.find = (params) => {
         let filter = params.filter || {};
         let options = params.options || {};
 
@@ -234,7 +234,7 @@ function mongoDB() {
                 return;
             }
 
-            res_cursor.toArray().then(async function (results) {
+            await res_cursor.toArray().then(async function (results) {
                 log.info('info-aggregate-params:' + JSON.stringify(pipeline));
                 //log.info("info-aggregate-" + collectionName, results);
 
@@ -254,6 +254,7 @@ function mongoDB() {
                 return returnContent;
             }).catch(function (errTo) {
                 reject(errTo);
+                throw errTo;
             });
         });
     };

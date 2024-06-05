@@ -113,19 +113,7 @@ function core() {
          * Event listener for HTTP server "listening" event.
          */
         function onListening() {
-            let addr = instance.server.address();
-            let bind = typeof addr === 'string'
-                ? 'pipe ' + addr
-                : addr.port;
-            let host = addr.address;
-            let localAddresses = ['::', '127.0.0.1'];
-            host = (!isEmpty(cjs.config.server_hostname)) ? "http://" + cjs.config.server_hostname : (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
-            if (cjs.config.server_https)
-                host = host.replace("http", "https");
-
-            cjs.config.host_address = host;
-            if (bind !== "80" && bind !== "443")
-                cjs.config.host_address += ":" + bind;
+            configureHostAddress();
 
             if (!cjs.config.hide_start_log) {
                 log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------');
@@ -146,49 +134,54 @@ function core() {
     /**
      * Initialize express server
      */
-    this.initExpress = () => {
+    this.initExpress = (noserver) => {
         // set views dir and template engine
         expressInstance.set('views', path.join(cjs.config.app_root, 'views'));
         let ejs = require('ejs');
         expressInstance.engine('html', ejs.renderFile);
         expressInstance.set('view engine', 'html');
-        // middlewares
-        let bodyParser = require('body-parser');
 
-        // configure the app to use bodyParser()
-        expressInstance.use(bodyParser.urlencoded({
-            extended: true
-        }));
+        if (!noserver) {
+            // middlewares
+            let bodyParser = require('body-parser');
 
-        // log request content
-        expressInstance.use(require('./request-info')());
+            // configure the app to use bodyParser()
+            expressInstance.use(bodyParser.urlencoded({
+                extended: true
+            }));
 
-        // set security
-        let Security = require("./security");
-        instance.security = Security;
-        expressInstance.use(Security);
+            // log request content
+            expressInstance.use(require('./request-info')());
 
-        // upload files middleware
-        expressInstance.use(multer({
-            dest: path.join(cjs.config.app_root, cjs.config.multer_path),
-            inMemory: cjs.config.multer_inmemory
-        }).any());
+            // set security
+            let Security = require("./security");
+            instance.security = Security;
+            expressInstance.use(Security);
 
-        expressInstance.use((req, res, next) => {
-            bodyParser.json()(req, res, err => {
-                if (err) {
-                    const utils = require('./utils');
-                    utils.responseError(res, cjs.i18n.__('Error parsing JSON content on body. Check the syntax.'), 406);
-                    return;
-                }
+            // upload files middleware
+            expressInstance.use(multer({
+                dest: path.join(cjs.config.app_root, cjs.config.multer_path),
+                inMemory: cjs.config.multer_inmemory
+            }).any());
 
-                next();
+            expressInstance.use((req, res, next) => {
+                bodyParser.json()(req, res, err => {
+                    if (err) {
+                        const utils = require('./utils');
+                        utils.responseError(res, cjs.i18n.__('Error parsing JSON content on body. Check the syntax.'), 406);
+                        return;
+                    }
+
+                    next();
+                });
             });
-        });
-        //expressInstance.use(logger('Response time\: :response-time\\n'));
-        // catch not found
-        // start server
-        this.startServer();
+            //expressInstance.use(logger('Response time\: :response-time\\n'));
+            // catch not found
+            // start server
+            this.startServer();
+        } else {
+            cjs.config.swagger.enabled = false;
+        }
     }
 
     /**
@@ -218,6 +211,21 @@ function core() {
             directory: path.join(__dirname, "../locales"),
             updateFiles: true
         });
+    }
+
+    /**
+     * Save on config the host address
+     */
+    function configureHostAddress() {
+        let addr = instance.server.address();
+        let host = addr.address;
+        let localAddresses = ['::', '127.0.0.1'];
+        host = (!isEmpty(cjs.config.server_hostname)) ? "http://" + cjs.config.server_hostname : (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
+        if (cjs.config.server_https)
+            host = host.replace("http", "https");
+        cjs.config.host_address = host;
+        if (bind !== "80" && bind !== "443")
+            cjs.config.host_address += ":" + bind;
     }
 }
 

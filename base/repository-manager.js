@@ -89,16 +89,18 @@ class RepositoryManager {
             });
     }
 
-    async find(options) {
+    find(options) {
         let conn = this.getConnection(options.repository);
+
         if (isEmpty(conn))
             log.error(cjs.i18n.__("Cannot load data from repository \"{{options.repository}}\"", {repository: options.repository}));
-        else
-            return await conn.find(options).catch(function () {
+        else {
+            try {
+                return conn.find(options);
+            } catch (e) {
                 return false;
-            }).then(function (data) {
-                return data;
-            });
+            }
+        }
     }
 
     close(connection) {

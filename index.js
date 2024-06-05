@@ -9,7 +9,7 @@ let routerManager = require("./base/router-manager");
 let entityManager = require("./base/entity-manager");
 const path = require("path");
 
-exports.start = function (appDir) {
+exports.start = function (appDir, noserver) {
     process.env.DEBUG = "i18n:debug";
     cjs.entityManager = null;
     // global config
@@ -22,12 +22,15 @@ exports.start = function (appDir) {
     log.info("Initializing CrabJS...");
     log.info("Loading Libraries...");
     // initializing express server
-    core.initExpress();
-    log.info("Loading Routes...");
-    routerManager.init(core);
+    core.initExpress(noserver);
+    if (!noserver) {
+        log.info("Loading Routes...");
+        routerManager.init(core);
+    }
     // load entityManager to memory
     entityManager.init();
     cjs.entityManager = entityManager;
+    cjs.repositoryManager = require("./base/repository-manager");
     cjs.app = core.expressInstance;
     cjs.security = core.security;
     cjs.utils = utils;
