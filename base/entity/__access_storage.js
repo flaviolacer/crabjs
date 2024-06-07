@@ -61,7 +61,6 @@ function __access_storage() {
             await md.remove({entity: entity, filter: {_id: expiredToken._id}, definitions: entity.__definitions});
         }
     }
-
 }
 
 module.exports = __access_storage;

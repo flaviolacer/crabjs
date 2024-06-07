@@ -151,6 +151,7 @@ function entityManager() {
      * @returns Entity
      */
     this.newEntity = this.setEntity;
+    this.createEntity = this.setEntity;
 
     /**
      * Load entity class

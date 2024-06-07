@@ -113,12 +113,12 @@ function core() {
          * Event listener for HTTP server "listening" event.
          */
         function onListening() {
-            configureHostAddress();
+            let serverInfo = configureHostAddress();
 
             if (!cjs.config.hide_start_log) {
                 log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------');
                 log.force('\x1b[36m%s\x1b[0m', '   ' + cjs.i18n.__('CrabJS started!'));
-                log.force('\x1b[36m%s\x1b[0m', '   ' + cjs.i18n.__('Server started at "') + host + ':' + bind + '"');
+                log.force('\x1b[36m%s\x1b[0m', '   ' + cjs.i18n.__('Server started at "') + serverInfo.host + ':' + serverInfo.bind + '"');
                 log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------\n');
             }
         }
@@ -218,6 +218,9 @@ function core() {
      */
     function configureHostAddress() {
         let addr = instance.server.address();
+        let bind = typeof addr === 'string'
+            ? 'pipe ' + addr
+            : addr.port;
         let host = addr.address;
         let localAddresses = ['::', '127.0.0.1'];
         host = (!isEmpty(cjs.config.server_hostname)) ? "http://" + cjs.config.server_hostname : (localAddresses.contains(host)) ? "http://localhost" : 'http://' + host;
@@ -226,6 +229,11 @@ function core() {
         cjs.config.host_address = host;
         if (bind !== "80" && bind !== "443")
             cjs.config.host_address += ":" + bind;
+        return {
+            host:host,
+            bind: bind,
+            host_address: cjs.config.host_address
+        }
     }
 }
 

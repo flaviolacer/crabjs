@@ -557,7 +557,8 @@ function mongoDB() {
     };
 
     this.close = async () => {
-        this.client.close();
+        if (this.client)
+            this.client.close();
     }
 
     this.isConnected = () => {
