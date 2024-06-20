@@ -150,6 +150,12 @@ function core() {
                 extended: true
             }));
 
+            // upload files middleware
+            expressInstance.use(multer({
+                dest: path.join(cjs.config.app_root, cjs.config.multer_path),
+                inMemory: cjs.config.multer_inmemory
+            }).any());
+
             // log request content
             expressInstance.use(require('./request-info')());
 
@@ -157,12 +163,6 @@ function core() {
             let Security = require("./security");
             instance.security = Security;
             expressInstance.use(Security);
-
-            // upload files middleware
-            expressInstance.use(multer({
-                dest: path.join(cjs.config.app_root, cjs.config.multer_path),
-                inMemory: cjs.config.multer_inmemory
-            }).any());
 
             expressInstance.use((req, res, next) => {
                 bodyParser.json()(req, res, err => {

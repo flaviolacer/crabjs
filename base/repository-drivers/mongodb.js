@@ -99,6 +99,9 @@ function mongoDB() {
                 return (value === "now") ? new Date() : new Date(value);
             case "boolean":
                 return !isBoolean(value) ? Boolean(value) : value;
+            case "object":
+            case "array":
+                return isString(value) ? JSON.parse(value) : value;
             default:
                 return value;
         }
@@ -583,7 +586,7 @@ function mongoDB() {
                 curFind = db.collection(collectionName).aggregate(pipeline, options);
             } catch (e) {
                 reject(e);
-                throw e;
+                return;
             }
 
             if (getcursor)
@@ -592,11 +595,11 @@ function mongoDB() {
                 let results;
                 try {
                     results = await curFind.toArray();
+                    resolve({results: results});
                 } catch (e) {
                     reject(e);
-                    throw e;
+                    //throw e;
                 }
-                resolve({results: results});
             }
         });
     }

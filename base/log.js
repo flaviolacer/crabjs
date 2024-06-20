@@ -1,5 +1,6 @@
 let cjs = require('../base/cjs');
 const debugLevel = {
+    "debug": {value: 0},
     "info": {value: 1},
     "warn": {value: 2, colorTemplate: "\x1b[33m%s\x1b[0m"},
     "error": {value: 3, colorTemplate: "\x1b[31m%s\x1b[0m"}
