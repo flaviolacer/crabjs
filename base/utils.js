@@ -64,6 +64,12 @@ function Util() {
             if (content.entityName)
                 cleanEntity(content);
 
+            // clean internal variables
+            let keys = Object.keys(content);
+            for(let i = 0, j = keys.length; i < j; i++)
+                if (keys[i].startsWith("__") || keys[i].startsWith("$"))
+                    delete content[keys[i]];
+
             response["content"] = content;
 
             if (!isEmpty(params))

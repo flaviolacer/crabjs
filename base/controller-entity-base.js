@@ -27,7 +27,7 @@ function ControllerEntityBase() {
                     let primaryKey = this.__entity.__definitions.primaryKeys[0].fname;
                     newProduct[primaryKey] = filter;
                     let returnUpdate = await newProduct.save();
-                    record = extend(returnUpdate, newProduct);
+                    record = extend(newProduct, returnUpdate);
                 } else {
                     if (newProduct.__filter) {
                         options.filter = newProduct.__filter;

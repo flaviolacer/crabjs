@@ -341,7 +341,7 @@ function mongoDB() {
                     continue;
                 }
                 let fieldName = (isEmpty(fields[fieldRef].field)) ? fieldRef : fields[fieldRef].field;
-                if (typeof fields[fieldRef].required !== "undefined" && isEmpty(entity[fieldRef]) && isEmpty(filter) || (!isEmpty(filter) && entity.hasOwnProperty(fieldRef) && isEmpty(entity[fieldRef]))) { // required fields
+                if (typeof fields[fieldRef].required !== "undefined" && ((isEmpty(entity[fieldRef]) && isEmpty(filter)) || (!isEmpty(filter) && entity.hasOwnProperty(fieldRef) && isEmpty(entity[fieldRef])))) { // required fields
                     log.error(cjs.i18n.__("Required field \"{{fieldName}}\" was not set on entity \"{{entityName}}\"", {
                         fieldName: fieldName, entityName: entity.entityName
                     }));
