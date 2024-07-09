@@ -31,9 +31,19 @@ String.prototype.lastIndexOfRegex = function (regex) {
 };
 
 Array.prototype.contains = function (k) {
-    for (let p in this)
-        if (this[p].toLowerCase && (this[p].toLowerCase() === k.toLowerCase()))
-            return true;
+    if (isString(k)) {
+        for (let p in this)
+            if (this[p].toLowerCase && (this[p].toLowerCase() === k.toLowerCase()))
+                return true;
+    } else {
+        if (isArray(k)) {
+            for (let p in this)
+                for (let i = 0, j = k.length; i < j; i++) {
+                    if (this[p].toLowerCase && (this[p].toLowerCase() === k[i].toLowerCase()))
+                        return true;
+                }
+        }
+    }
     return false;
 };
 
@@ -77,14 +87,14 @@ global.isDate = function (obj) {
     return (obj instanceof Date);
 };
 
-global.isBoolean = function(val) {
+global.isBoolean = function (val) {
     return val === false || val === true;
 }
 
 global.extend = function (target) {
     if (target == null) return;
     let sources = [].slice.call(arguments, 1);
-    for(let i = 0, j = sources.length;i<j;i++) {
+    for (let i = 0, j = sources.length; i < j; i++) {
         let source = sources[i];
         for (let prop in source) {
             target[prop] = source[prop];

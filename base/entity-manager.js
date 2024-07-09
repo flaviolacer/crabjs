@@ -267,8 +267,8 @@ function entityManager() {
             let entityDefinitions = getEntityDefinition(entity);
             if (!entityDefinitions) {
                 log.error(cjs.i18n.__("Entity not defined. Did you missed the file on directory?"));
-                reject(false);
-                return false;
+                reject(null);
+                return null;
             }
             let entityData = null;
             try {

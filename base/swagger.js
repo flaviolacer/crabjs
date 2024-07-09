@@ -12,7 +12,7 @@ function swagger() {
 
         cjs.config.swagger.info.authorizationUrl = cjs.config.security.jwt.token_signin_route;
         cjs.config.swagger.info.tokenUrl = cjs.config.security.jwt.refresh_token.refresh_token_route;
-        cjs.config.swagger.info.apiServerAddress = new URL(cjs.config.application_prefix, cjs.config.host_address).href;
+        cjs.config.swagger.info.apiServerAddress = new URL(cjs.config.application_prefix, cjs.config.host_address || "http://localhost").href;
 
         const swaggerDocument = JSON.parse(template(cjs.config.swagger.info));
         extend(swaggerDocument, swaggerFiles);

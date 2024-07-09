@@ -79,7 +79,7 @@ let checkAuthEntity = async (req) => {
     let testPasswordValue;
 
     let grant_type = req.query["grant_type"] || req.body["grant_type"] || req.headers["grant_type"];
-    let scope = req.query["scope"] || req.body["scope"] || req.headers["scope"];
+    let scopes = req.query["scopes"] || req.body["scopes"] || req.headers["scopes"];
 
     if (grant_type === "password") { // RFCOAuth2 // swagger
         securityConfig.auth_entity.request_username_field = "username";
@@ -101,7 +101,7 @@ let checkAuthEntity = async (req) => {
         return false;
 
     if (!isEmpty(scope))
-        authLoginFields.scope = scope;
+        authLoginFields.scopes = scopes;
 
     authLoginFields[securityConfig.auth_entity.username_field] = testUsernameValue;
 
@@ -113,6 +113,7 @@ let checkAuthEntity = async (req) => {
     // security
     req.authInfo.authUser = credential[securityConfig.auth_entity.username_field];
     req.authInfo.authId = credential._id;
+    req.authInfo.scopes = credential.scopes;
     return verify_password(repoPassword, testPasswordValue);
 }
 
@@ -238,6 +239,7 @@ async function security(req, res, next) {
             let authInfo = {};
             authInfo.authUser = credential[securityConfig.auth_entity.username_field];
             authInfo.authId = credential._id;
+            authInfo.scopes = credential.scopes
 
             return await generateRequestToken(null, authInfo);
         } else {
@@ -353,7 +355,13 @@ async function security(req, res, next) {
         } else if (urlInfo.pathname.contains(cjs.secBypassRoutes)) next();
         else { // not bypassed
             // check if token was sent using token field
-            if (isAuthenticated) next();
+            if (isAuthenticated) {
+                if (!isEmpty(cjs.scopeRoutes[urlInfo.pathname]) && cjs.scopeRoutes[urlInfo.pathname][req.method.toLowerCase()] && !cjs.scopeRoutes[urlInfo.pathname][req.method.toLowerCase()].contains(req.token_data.scopes)) {
+                    let err = new Error(cjs.i18n.__("Access denied. Check access permissions."), 406);
+                    sendJson(res, err, 406);
+                } else
+                    next();
+            }
             else {
                 let err = new Error(cjs.i18n.__("Access denied. Request not authenticated."), 403);
                 sendJson(res, err, 403);

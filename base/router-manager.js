@@ -253,14 +253,27 @@ function routerManager() {
                                             //    methodFunction
 
                                             // check bypass security on route
+                                            // complete url
+                                            let routeData = route.data.route;
+                                            let routeLastData = "";
+                                            if (routeData.contains(':')) {
+                                                routeData = routeData.split(':')[0];
+                                                routeLastData = ".";
+                                            }
+                                            let routeComplete = path.join(cjs.config.application_prefix, headerAnnotations.route, routeData) + routeLastData;
                                             if (route.data.hasOwnProperty("nosecurity")) {
-                                                let routeData = route.data.route;
-                                                let routeLastData = "";
-                                                if (routeData.contains(':')) {
-                                                    routeData = routeData.split(':')[0];
-                                                    routeLastData = ".";
-                                                }
-                                                cjs.secBypassRoutes.push(path.join(cjs.config.application_prefix, headerAnnotations.route, routeData) + routeLastData);
+                                                cjs.secBypassRoutes.push(routeComplete);
+                                            }
+
+                                            let scopes = route.data["scopes"] || route.data["scope"];
+                                            if (!isEmpty(scopes)) {
+                                                if (isString(scopes))
+                                                    scopes = scopes.split(",");
+                                                let scopeList = [];
+                                                for (let i = 0, j = scopes.length; i < j; i++)
+                                                    scopeList.push(scopes[i].trim());
+                                                cjs.scopeRoutes[routeComplete] = cjs.scopeRoutes[routeComplete] || {};
+                                                cjs.scopeRoutes[routeComplete][route.data.method.toLowerCase()] = scopeList;
                                             }
 
                                             newRoute[route.data.method.toLowerCase()](route.data.route, methodFunction);

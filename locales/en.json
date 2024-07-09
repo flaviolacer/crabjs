@@ -78,5 +78,8 @@
 	"Could not save data in repository.": "Could not save data in repository.",
 	"Get entity from repository api_credential": "Get entity from repository api_credential",
 	"Need to specify the filter to save the entity.": "Need to specify the filter to save the entity.",
-	"Get entity from repository code_request": "Get entity from repository code_request"
+	"Get entity from repository code_request": "Get entity from repository code_request",
+	"Get entity from repository store_request": "Get entity from repository store_request",
+	"Access denied.": "Access denied.",
+	"Access denied. Check access permissions.": "Access denied. Check access permissions."
 }
