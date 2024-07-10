@@ -59,6 +59,7 @@ let checkOAuth2Auth = async (req) => {
         if (credentials) {
             req.authInfo.clientId = testClientId;
             req.authInfo.clientSecret = testClientSecret;
+            req.authInfo.ref = credentials.name || credentials.ref;
             return true;
         }
     }
@@ -79,7 +80,9 @@ let checkAuthEntity = async (req) => {
     let testPasswordValue;
 
     let grant_type = req.query["grant_type"] || req.body["grant_type"] || req.headers["grant_type"];
-    let scopes = req.query["scopes"] || req.body["scopes"] || req.headers["scopes"];
+    let scopes = req.query["scopes"] || req.body["scopes"];
+    if (!isEmpty(req.headers["scopes"]))
+        scopes = req.headers["scopes"].split(",");
 
     if (grant_type === "password") { // RFCOAuth2 // swagger
         securityConfig.auth_entity.request_username_field = "username";
@@ -100,8 +103,14 @@ let checkAuthEntity = async (req) => {
     if (isEmpty(testUsernameValue) || isEmpty(testPasswordValue))
         return false;
 
-    if (!isEmpty(scope))
-        authLoginFields.scopes = scopes;
+    if (!isEmpty(scopes)) {
+        if (isArray(scopes)) {
+            authLoginFields["$or"] = [];
+            for (let i = 0, j = scopes.length; i < j; i++)
+                authLoginFields["$or"].push({"scopes": scopes[i]});
+        } else
+            authLoginFields["scopes"] = {data: scopes};
+    }
 
     authLoginFields[securityConfig.auth_entity.username_field] = testUsernameValue;
 
@@ -310,6 +319,8 @@ async function security(req, res, next) {
             if (isAuthenticated) {
                 let payload = {};
                 payload[securityConfig.jwt.sign_client_id_field] = req.authInfo[securityConfig.jwt.sign_client_id_field];
+                if (!isEmpty(req.authInfo["ref"]))
+                    payload.name = req.authInfo["ref"];
                 await generateRequestToken(res, payload);
             } else {
                 let err = new Error(cjs.i18n.__('Access denied. Invalid credentials.'), 403);
@@ -361,8 +372,7 @@ async function security(req, res, next) {
                     sendJson(res, err, 406);
                 } else
                     next();
-            }
-            else {
+            } else {
                 let err = new Error(cjs.i18n.__("Access denied. Request not authenticated."), 403);
                 sendJson(res, err, 403);
             }

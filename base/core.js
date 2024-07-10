@@ -160,11 +160,11 @@ function core() {
             expressInstance.use(require('./request-info')());
 
             // set security
-            let Security = require("./security");
+            const Security = require("./security");
             instance.security = Security;
-            expressInstance.use(Security);
 
             expressInstance.use((req, res, next) => {
+                //if (req.get('Content-Type') === "application/json")
                 bodyParser.json()(req, res, err => {
                     if (err) {
                         const utils = require('./utils');
@@ -175,6 +175,8 @@ function core() {
                     next();
                 });
             });
+
+            expressInstance.use(Security);
             //expressInstance.use(logger('Response time\: :response-time\\n'));
             // catch not found
             // start server

@@ -101,7 +101,7 @@ function mongoDB() {
                 return !isBoolean(value) ? Boolean(value) : value;
             case "object":
             case "array":
-                return isString(value) ? JSON.parse(value) : value;
+                return isString(value) ? isObject(value) ? value.data : JSON.parse(value) : value;
             default:
                 return value;
         }
@@ -269,7 +269,7 @@ function mongoDB() {
             let db = await this.getDb();
             if (!db) {
                 log.error(cjs.i18n.__("Cannot get entity {{entityName}}", {entityName: options.entity}));
-                return;
+                return false;
             }
 
             //convert fields on filter for the right type
@@ -283,6 +283,7 @@ function mongoDB() {
                     error_message: cjs.i18n.__("Undefined error on trying to convert type definitions of entity \"{{entityName}}\"", {entityName: options.entity}),
                     error_code: Constants.UNDEFINED_ERROR
                 });
+                return false;
             }
             let collectionName = options.definitions.entity.data.RepositoryName || options.entity;
             try {
