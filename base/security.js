@@ -237,7 +237,7 @@ async function security(req, res, next) {
     /*
     * Force authentication
     */
-    this.forceRepositoryUserAuthentication = async (userdata) => {
+    this.forceRepositoryUserAuthentication = async (userdata, ref) => {
         let credentialSearchFields = {};
         let ae = securityConfig.auth_entity;
         securityConfig.auth_entity.request_username_field = securityConfig.auth_entity.request_username_field || securityConfig.auth_entity.username_field;
@@ -248,7 +248,9 @@ async function security(req, res, next) {
             let authInfo = {};
             authInfo.authUser = credential[securityConfig.auth_entity.username_field];
             authInfo.authId = credential._id;
-            authInfo.scopes = credential.scopes
+            authInfo.scopes = credential.scopes;
+            (!isEmpty(ref))
+            authInfo.ref = ref;
 
             return await generateRequestToken(null, authInfo);
         } else {
