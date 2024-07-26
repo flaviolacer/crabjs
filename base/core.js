@@ -58,7 +58,7 @@ function core() {
         /**
          * Listen on provided port, on all network interfaces.
          */
-        this.server.listen(port);
+        this.server.listen(port, cjs.config.server_bind_ip);
         this.server.on('error', onError);
         this.server.on('listening', onListening);
 

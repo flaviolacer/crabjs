@@ -31,7 +31,7 @@ function mongoDB() {
             }
     }
 
-    let translateFilter = (filter) => {
+    let translateFilter = (filter, definitions) => {
         if (isEmpty(filter))
             return null;
         let filterKeys = Object.keys(filter);
@@ -51,9 +51,9 @@ function mongoDB() {
                         delete filter[filterKey];
                         break;
                 }
-            } else if (isString(filterValue) && filterValue.trim().startsWith("{")) { // possibli JSON
+            } else if (isObject(filterValue) || (isString(filterValue) && filterValue.trim().startsWith("{"))) { // possibli JSON
                 try {
-                    let filterValueParsed = JSON.parse(filterValue);
+                    let filterValueParsed = (isObject(filterValue)) ? filterValue : JSON.parse(filterValue);
                     let fieldValueKeys = Object.keys(filterValueParsed);
                     for (var k = 0, l = fieldValueKeys.length; k < l; k++) {
                         let filterValueKey = fieldValueKeys[k];
@@ -62,6 +62,13 @@ function mongoDB() {
                                 case "__like":
                                 case "__regex":
                                     filter[filterKey] = new RegExp(filterValueParsed[filterValueKey], "i");
+                                    break;
+                                case "__in":
+                                    let in_value = filterValueParsed[filterValueKey];
+                                    if (isArray(in_value)) {
+                                        in_value = in_value.map(_value => instance.setType(_value, definitions.fields[filterKey].type));
+                                        filter[filterKey] = { $in: in_value };
+                                    }
                                     break;
                             }
                         }
@@ -84,7 +91,9 @@ function mongoDB() {
                 return !isNaN(value) ? value : new parseFloat(value);
             case "objectid":
                 try {
-                    return new MongoDB.ObjectId(value);
+                    if (isString(value))
+                        return new MongoDB.ObjectId(value);
+                    else return value
                 } catch (e) {
                     log.error(cjs.i18n.__("Error on converting ObjectId Field: '{{value}}'", {value: value}));
                     throw new Error(e);
@@ -195,7 +204,7 @@ function mongoDB() {
             const found = pipeline.some(fi => !isEmpty(fi.$match));
 
             // translate filter functions
-            translateFilter(filter);
+            translateFilter(filter, params.definitions);
 
             // filter - options
             if (!isEmpty(filter["__page"])) {
@@ -604,6 +613,8 @@ function mongoDB() {
             }
         });
     }
+
+    this.newId = () => new MongoDB.ObjectId();
 }
 
 module.exports = new mongoDB();
