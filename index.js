@@ -34,6 +34,14 @@ exports.start = function (appDir, noserver) {
     cjs.app = core.expressInstance;
     cjs.security = core.security;
     cjs.utils = utils;
+    cjs.response = (res, data, code, options) => {
+        options = options || {};
+        options.error = options.error || false;
+        if (options.error)
+            utils.responseError(res, data, code, options.data);
+        else
+            utils.responseData(res, data);
+    }
     // return cjs object to app
     return cjs;
 }

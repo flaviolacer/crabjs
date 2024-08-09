@@ -243,7 +243,8 @@ function entityManager() {
      * @param filter
      * @returns {Promise<unknown>}
      */
-    this.getEntity = (entity, filter) => {
+    this.getEntity = (entity, filter, options) => {
+        options = options || {};
         // convert array to object
         if (isArray(filter))
             filter = Object.assign({}, filter);
@@ -276,7 +277,11 @@ function entityManager() {
                     repository: entityDefinitions.entity.repository,
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
-                    filter: filter
+                    getEntityDefinition: getEntityDefinition,
+                    filter: filter,
+                    options: {
+                        load: options.load,
+                    }
                 });
 
                 if (!isEmpty(entityData) && (entityData !== false)) {
@@ -324,11 +329,13 @@ function entityManager() {
                     repository: entityDefinitions.entity.repository,
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
+                    getEntityDefinition: getEntityDefinition,
                     filter: filter,
                     options: {
                         page_size: options.page_size || config.repository_page_size || 10,
                         page_number: options.page_number || 1,
-                        sort : options.sort
+                        sort : options.sort,
+                        load: options.load,
                     }
                 });
 

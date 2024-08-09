@@ -50,6 +50,10 @@ function mongoDB() {
 
                         delete filter[filterKey];
                         break;
+                    case "__or":
+                        filter['$or'] = filter["__or"];
+                        delete filter[filterKey];
+                        break;
                 }
             } else if (isObject(filterValue) || (isString(filterValue) && filterValue.trim().startsWith("{"))) { // possibli JSON
                 try {
@@ -67,7 +71,7 @@ function mongoDB() {
                                     let in_value = filterValueParsed[filterValueKey];
                                     if (isArray(in_value)) {
                                         in_value = in_value.map(_value => instance.setType(_value, definitions.fields[filterKey].type));
-                                        filter[filterKey] = { $in: in_value };
+                                        filter[filterKey] = {$in: in_value};
                                     }
                                     break;
                             }
@@ -83,6 +87,8 @@ function mongoDB() {
     this.setType = (value, type) => {
         type = type || "";
         switch (type.toLowerCase().trim()) {
+            case "long":
+                return MongoDB.Long.fromNumber(value);
             case "int":
             case "integer":
                 return !isNaN(value) ? value : new parseInt(value);
@@ -218,6 +224,25 @@ function mongoDB() {
             let pipeline_count = pipeline.clone();
             pipeline_count.push({"$count": "count"});
 
+            // check if has load
+            if (!isEmpty(options.load)) {
+                if (!isArray(options.load))
+                    options.load = [options.load];
+                // get entityInfo
+                for (let i = 0, j = options.load.length; i < j; i++) {
+                    let lookup = options.load[i];
+                    let entityDefinition = params.getEntityDefinition(lookup.entity);
+                    pipeline.push({
+                        "$lookup": {
+                            "from": entityDefinition.entity.data.RepositoryName || lookup.entity,
+                            "localField": lookup.local || lookup.localField,
+                            "foreignField": lookup.foreign || lookup.foreignField || "_id",
+                            "as": lookup.as || lookup.local || lookup.localField
+                        }
+                    });
+                }
+            }
+
             // sort order
             if (options.sort) {
                 let sortKeys = Object.keys(options.sort);
@@ -271,32 +296,66 @@ function mongoDB() {
         });
     };
 
-    this.findOne = async (options) => {
-        let filter = options.filter || {};
-        options = options || {};
+    this.findOne = async (params) => {
+        let filter = params.filter || {};
+        params = params || {};
+        params.options = params.options || {};
         return new Promise(async (resolve, reject) => {
             let db = await this.getDb();
             if (!db) {
-                log.error(cjs.i18n.__("Cannot get entity {{entityName}}", {entityName: options.entity}));
+                log.error(cjs.i18n.__("Cannot get entity {{entityName}}", {entityName: params.entity}));
                 return false;
             }
 
             //convert fields on filter for the right type
             // convert fields to types
             try {
-                convertFieldsToTypeDefinitions(filter, options.definitions);
+                convertFieldsToTypeDefinitions(filter, params.definitions);
             } catch (e) {
                 log.error(e.message);
                 reject({
                     error: true,
-                    error_message: cjs.i18n.__("Undefined error on trying to convert type definitions of entity \"{{entityName}}\"", {entityName: options.entity}),
+                    error_message: cjs.i18n.__("Undefined error on trying to convert type definitions of entity \"{{entityName}}\"", {entityName: params.entity}),
                     error_code: Constants.UNDEFINED_ERROR
                 });
                 return false;
             }
-            let collectionName = options.definitions.entity.data.RepositoryName || options.entity;
+
+            let collectionName = params.definitions.entity.data.RepositoryName || params.entity;
             try {
-                await db.collection(collectionName).findOne(filter).then((obj) => {
+                await db.collection(collectionName).findOne(filter).then(async (obj) => {
+
+                    // check if has load
+                    if (!isEmpty(params.options.load)) {
+                        if (!isArray(params.options.load))
+                            params.options.load = [params.options.load];
+
+                        for (let i = 0, j = params.options.load.length; i < j; i++) {
+                            let lookup = params.options.load[i];
+                            let entityDefinition = params.getEntityDefinition(lookup.entity);
+                            let _lookupFilter = {};
+                            let _entityCollection = entityDefinition.entity.data.RepositoryName || lookup.entity;
+                            let _localField = lookup.local || lookup.localField;
+                            let _localObjectField = lookup.localObjField;
+                            let _asField = lookup.as || _localField;
+                            let _foreignField = lookup.foreign || lookup.foreignField || "_id";
+
+                            if (isArray(obj[_localField])) {
+                                let _retArr = [];
+                                for (let k = 0, l = obj[_localField].length; k < l; k++) {
+                                    let _refObj = obj[_localField][k];
+                                    _lookupFilter[_foreignField] = (isEmpty(_localObjectField)) ? _refObj : _refObj[_localObjectField];
+                                    let _loadObj = await db.collection(_entityCollection).findOne(_lookupFilter);
+                                    _retArr.push(_loadObj);
+                                }
+                                obj[_asField] = _retArr;
+                            } else {
+                                _lookupFilter[_foreignField] = obj[_localField];
+                                obj[_asField] = await db.collection(_entityCollection).findOne(_lookupFilter);
+                            }
+                        }
+                    }
+
                     resolve(obj);
                     return obj;
                 });
@@ -306,6 +365,24 @@ function mongoDB() {
                 return false;
             }
         });
+    };
+
+    this.findOneAndUpdate = async (options) => {
+        let db = await this.getDb();
+        if (!db) {
+            log.error(cjs.i18n.__("Cannot run findAndModify"));
+            return false;
+        }
+
+        try {
+            return await db.collection(options.collection).findOneAndUpdate(options.filter, options.update, {
+                upsert: true,
+                returnNewDocument: true
+            });
+        } catch (e) {
+            log.error(e);
+            return null;
+        }
     };
 
     this.save = (options) => {
@@ -615,6 +692,8 @@ function mongoDB() {
     }
 
     this.newId = () => new MongoDB.ObjectId();
+
+    this.ObjectId = () => MongoDB.ObjectId;
 }
 
 module.exports = new mongoDB();

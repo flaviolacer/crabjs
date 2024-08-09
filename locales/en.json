@@ -81,5 +81,8 @@
 	"Get entity from repository code_request": "Get entity from repository code_request",
 	"Get entity from repository store_request": "Get entity from repository store_request",
 	"Access denied.": "Access denied.",
-	"Access denied. Check access permissions.": "Access denied. Check access permissions."
+	"Access denied. Check access permissions.": "Access denied. Check access permissions.",
+	"You must specify the name of the entity to create a new one.": "You must specify the name of the entity to create a new one.",
+	"Get entity from repository order": "Get entity from repository order",
+	"Get entity from repository payment": "Get entity from repository payment"
 }
