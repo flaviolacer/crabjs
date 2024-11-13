@@ -3,6 +3,10 @@ const fs = require('fs');
 const cjs = require("./cjs");
 const handlebars = require("handlebars");
 
+/**
+ * @class Util
+ * @constructor
+ */
 function Util() {
     this.checkLibExists = (libName) => {
         try {

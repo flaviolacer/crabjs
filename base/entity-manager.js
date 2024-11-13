@@ -5,7 +5,11 @@ const annotation = require('./annotation');
 const repositoryManager = require("./repository-manager");
 let cjs = require("./cjs");
 
-function entityManager() {
+/**
+ * @class EntityManager
+ * @module EntityManager
+ */
+function EntityManager() {
     let instance = this;
     let config = cjs.config;
 
@@ -241,6 +245,7 @@ function entityManager() {
      * Retrieve entity from repository
      * @param entity
      * @param filter
+     * @param options
      * @returns {Promise<unknown>}
      */
     this.getEntity = (entity, filter, options) => {
@@ -468,4 +473,4 @@ function entityManager() {
     }
 }
 
-module.exports = new entityManager();
+module.exports = new EntityManager();

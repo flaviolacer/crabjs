@@ -1,6 +1,6 @@
 /**
  * @Controller
- * @route('/{{name}}')
+ * @route('/{{route}}')
  */
 function {{name}}() {
     //Uncomment this to test your controller

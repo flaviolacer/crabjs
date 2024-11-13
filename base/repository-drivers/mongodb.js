@@ -2,6 +2,7 @@ const log = require('../log');
 let cjs = require("../cjs");
 
 const MongoDB = require('mongodb');
+const Double = MongoDB.Double;
 const Error = require("../error");
 const Constants = require("../constants");
 
@@ -88,13 +89,17 @@ function mongoDB() {
         type = type || "";
         switch (type.toLowerCase().trim()) {
             case "long":
-                return MongoDB.Long.fromNumber(value);
+                if (isNumber(value))
+                    return MongoDB.Long.fromNumber(value);
+                else if (isString(value))
+                    return MongoDB.Long.fromString(value);
+                else return value;
             case "int":
             case "integer":
-                return !isNaN(value) ? value : new parseInt(value);
+                return (!isString(value)) ? value : parseInt(value);
             case "float":
             case "double":
-                return !isNaN(value) ? value : new parseFloat(value);
+                return new Double(value);
             case "objectid":
                 try {
                     if (isString(value))
@@ -107,6 +112,8 @@ function mongoDB() {
             case "password":
                 if (isObject(value) && value.__plain)
                     return value.content;
+                else if (isString(value) && value.startsWith("pbkdf2_"))
+                    return value;
                 else
                     return encrypt_password(value);
             case "datetime":
@@ -218,7 +225,7 @@ function mongoDB() {
                 delete filter["__page"];
             }
 
-            if (!found) pipeline.push({$match: filter});
+            if (!found && !params.filter["__late_match"]) pipeline.push({$match: filter});
 
             // create pipeline for count
             let pipeline_count = pipeline.clone();
@@ -231,16 +238,29 @@ function mongoDB() {
                 // get entityInfo
                 for (let i = 0, j = options.load.length; i < j; i++) {
                     let lookup = options.load[i];
+                    let localAs = lookup.as || lookup.local || lookup.localField;
                     let entityDefinition = params.getEntityDefinition(lookup.entity);
                     pipeline.push({
                         "$lookup": {
                             "from": entityDefinition.entity.data.RepositoryName || lookup.entity,
                             "localField": lookup.local || lookup.localField,
                             "foreignField": lookup.foreign || lookup.foreignField || "_id",
-                            "as": lookup.as || lookup.local || lookup.localField
+                            "as": localAs
                         }
                     });
+                    if (lookup.separateRecords)
+                        pipeline.push({
+                            $unwind: {
+                                path: (localAs.startsWith('$')) ? localAs : `\$${localAs}`,
+                                preserveNullAndEmptyArrays: true
+                            }
+                        });
                 }
+            }
+
+            if (params.filter["__late_match"]) {
+                pipeline.push({$match: filter});
+                delete params.filter["__late_match"];
             }
 
             // sort order
@@ -286,8 +306,8 @@ function mongoDB() {
                         returnContent.records = results;
                         resolve(returnContent);
                     }
-                }
-                resolve(returnContent);
+                } else
+                    resolve(returnContent);
                 return returnContent;
             }).catch(function (errTo) {
                 reject(errTo);

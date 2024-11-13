@@ -65,9 +65,12 @@ function cliBase() {
     }
 
     this.createController = function (controllerName) {
+        // normalize and capitalize first char
+        controllerName = controllerName.charAt(0).toUpperCase() + controllerName.slice(1).toLowerCase();
+
         const source = fs.readFileSync(path.join(__dirname, "../templates/controller.template"), {encoding: 'utf-8'});
         const template = handlebars.compile(source);
-        const contents = template({name: controllerName});
+        const contents = template({name: controllerName, route: controllerName.toLowerCase()});
 
         let controllerPath = path.join(cjs.config.app_root, "/controller/");
         if (!fs.existsSync(controllerPath)) {
@@ -75,7 +78,7 @@ function cliBase() {
         }
 
         try {
-            fs.writeFileSync(path.join(controllerPath, controllerName + '.js'), contents);
+            fs.writeFileSync(path.join(controllerPath, controllerName.toLowerCase() + '.js'), contents);
             log.info('Controller created.\n');
         } catch (err) {
             log.error(`Oops! cannot create file: ${err.message}.`);
@@ -83,6 +86,9 @@ function cliBase() {
     };
 
     this.createEntity = function (entityName) {
+        // normalize and capitalize first char
+        entityName = entityName.charAt(0).toUpperCase() + entityName.slice(1).toLowerCase();
+
         const source = fs.readFileSync(path.join(__dirname, "../templates/entity.template"), {encoding: 'utf-8'});
         const template = handlebars.compile(source);
         const contents = template({name: entityName});
@@ -93,7 +99,7 @@ function cliBase() {
         }
 
         try {
-            fs.writeFileSync(path.join(entityPath, entityName + '.js'), contents);
+            fs.writeFileSync(path.join(entityPath, entityName.toLowerCase() + '.js'), contents);
             log.info('Entity created.\n');
         } catch (err) {
             log.error(`Oops! cannot create file: ${err.message}.`);

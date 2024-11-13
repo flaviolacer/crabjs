@@ -7,8 +7,25 @@ let core = require("./base/core");
 const utils = require("./base/utils");
 let routerManager = require("./base/router-manager");
 let entityManager = require("./base/entity-manager");
+let repositoryManager = require("./base/repository-manager");
 const path = require("path");
 
+/**
+ * @typedef Cjs
+ * @type {object}
+ * @property {entityManager} entityManager
+ * @property {repositoryManager} repositoryManager
+ * @property {utils} utils
+ * @property {function} response
+ **/
+/**
+ * @module Cjs
+ */
+/**
+ * @param {string} appDir
+ * @param {bool} noserver
+ * @returns {Cjs}
+ */
 exports.start = function (appDir, noserver) {
     process.env.DEBUG = "i18n:debug";
     cjs.entityManager = null;
@@ -30,10 +47,17 @@ exports.start = function (appDir, noserver) {
     // load entityManager to memory
     entityManager.init();
     cjs.entityManager = entityManager;
-    cjs.repositoryManager = require("./base/repository-manager");
+    cjs.repositoryManager = repositoryManager;
     cjs.app = core.expressInstance;
     cjs.security = core.security;
     cjs.utils = utils;
+
+    /**
+     * @param res
+     * @param data
+     * @param code
+     * @param options
+     */
     cjs.response = (res, data, code, options) => {
         options = options || {};
         options.error = options.error || false;
@@ -43,5 +67,6 @@ exports.start = function (appDir, noserver) {
             utils.responseData(res, data);
     }
     // return cjs object to app
+    /** @type {Cjs} */
     return cjs;
 }

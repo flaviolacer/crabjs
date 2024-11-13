@@ -66,6 +66,10 @@ global.isEmpty = function (obj) {
     return ((typeof obj === 'undefined' || obj === null || obj === '') || (isArray(obj) && (obj.length === 0) && Object.keys(obj).length === 0) || (isObject(obj) && (Object.keys(obj).length === 0 && obj.constructor === Object)));
 };
 
+global.isNumber = (value) => {
+    return typeof value === 'number';
+}
+
 global.sendJson = (res, content, status) => {
     res.status(status);
     res.json(content);

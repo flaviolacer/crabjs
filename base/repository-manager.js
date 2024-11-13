@@ -9,7 +9,9 @@ const Constants = require("./constants");
  * 2 - connection error
  * 5 - required field was not set
  */
-
+/**
+ * @class RepositoryManager
+ */
 class RepositoryManager {
     static connections = [];
 
