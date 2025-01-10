@@ -118,9 +118,10 @@ function mongoDB() {
                     return encrypt_password(value);
             case "datetime":
             case "date":
-                return (value === "now") ? new Date() : new Date(value);
+                return (value === "now") ? new Date() : (value instanceof Date) ? value : new Date(value);
             case "boolean":
-                return !isBoolean(value) ? Boolean(value) : value;
+            case "bool":
+                return !isBoolean(value) ? (isString(value) ? value === "true" : Boolean(value)) : value;
             case "object":
             case "array":
                 return isString(value) ? isObject(value) ? value.data : JSON.parse(value) : value;
@@ -713,7 +714,9 @@ function mongoDB() {
 
     this.newId = () => new MongoDB.ObjectId();
 
-    this.ObjectId = () => MongoDB.ObjectId;
+    this.ObjectId = (objId) => MongoDB.ObjectId(objId);
+
+    this.longFromNumber = MongoDB.Long.fromNumber
 }
 
 module.exports = new mongoDB();

@@ -337,7 +337,7 @@ function EntityManager() {
                     getEntityDefinition: getEntityDefinition,
                     filter: filter,
                     options: {
-                        page_size: options.page_size || config.repository_page_size || 10,
+                        page_size: (!isEmpty(options.page_size)) ? options.page_size : config.repository_page_size || 10,
                         page_number: options.page_number || 1,
                         sort : options.sort,
                         load: options.load,

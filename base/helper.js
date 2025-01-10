@@ -42,6 +42,11 @@ Array.prototype.contains = function (k) {
                     if (this[p].toLowerCase && (this[p].toLowerCase() === k[i].toLowerCase()))
                         return true;
                 }
+        } else {
+            for (let p in this)
+                if (this[p] === k)
+                    return true;
+            return false;
         }
     }
     return false;

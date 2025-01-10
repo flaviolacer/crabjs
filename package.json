@@ -1,6 +1,6 @@
 {
   "name": "crabjs",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "repository": "https://github.com/flaviolacer/crabjs",
   "author": "Flavio Lacerda",
   "homepage": "https://github.com/flaviolacer/crabjs",
@@ -8,11 +8,11 @@
     "cjs": "./cli/run.js"
   },
   "dependencies": {
-    "body-parser": "^1.20.2",
+    "body-parser": "^1.20.3",
     "deasync": "^0.1.30",
     "dotenv-defaults": "^5.0.2",
     "ejs": "^3.1.10",
-    "express": "^4.19.2",
+    "express": "^4.21.2",
     "flat": "^5.0.2",
     "handlebars": "^4.7.8",
     "i18n": "^0.15.1",
@@ -31,7 +31,7 @@
     "annotation"
   ],
   "devDependencies": {
-    "axios": "^1.7.2",
+    "axios": "^1.7.9",
     "mocha": "^10.4.0"
   },
   "scripts": {
