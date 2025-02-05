@@ -67,7 +67,7 @@ function ControllerEntityBase() {
                 record = await em.insertBatch(this.__entity.entityName, req.body);
             }
             utils.responseData(res, record);
-            return true;
+            return record;
         } else {
             utils.responseError(res, cjs.i18n.__('Error on save object. No defined body to save on entity: {{entityName}}', {
                 entityName: this.__entity.entityName

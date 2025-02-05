@@ -292,28 +292,36 @@ function mongoDB() {
                 return;
             }
 
-            await res_cursor.toArray().then(async function (results) {
-                log.info('info-aggregate-params:' + JSON.stringify(pipeline));
-                //log.info("info-aggregate-" + collectionName, results);
-
+            if (options.cursor) {
                 let returnContent = {
                     totalRecords: ((!isEmpty(record_count_cursor)) ? record_count_cursor.count : 0),
-                    records: []
+                    cursor: res_cursor
                 };
-                if (!isEmpty(results)) {
-                    if (options.one)
-                        resolve(results[0]);
-                    else {
-                        returnContent.records = results;
+                resolve(returnContent);
+            }
+            else
+                await res_cursor.toArray().then(async function (results) {
+                    log.info('info-aggregate-params:' + JSON.stringify(pipeline));
+                    //log.info("info-aggregate-" + collectionName, results);
+
+                    let returnContent = {
+                        totalRecords: ((!isEmpty(record_count_cursor)) ? record_count_cursor.count : 0),
+                        records: []
+                    };
+                    if (!isEmpty(results)) {
+                        if (options.one)
+                            resolve(results[0]);
+                        else {
+                            returnContent.records = results;
+                            resolve(returnContent);
+                        }
+                    } else
                         resolve(returnContent);
-                    }
-                } else
-                    resolve(returnContent);
-                return returnContent;
-            }).catch(function (errTo) {
-                reject(errTo);
-                throw errTo;
-            });
+                    return returnContent;
+                }).catch(function (errTo) {
+                    reject(errTo);
+                    throw errTo;
+                });
         });
     };
 

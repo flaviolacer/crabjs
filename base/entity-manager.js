@@ -341,10 +341,13 @@ function EntityManager() {
                         page_number: options.page_number || 1,
                         sort : options.sort,
                         load: options.load,
+                        cursor: options.cursor
                     }
                 });
-
-                if (entities) {
+                if (options.cursor) {
+                    log.info("Cursor retrieved");
+                    resolve(entities);
+                } else if (entities) {
                     log.info("Data retrieved");
                     if (options.rawData)
                         resolve(entities)
