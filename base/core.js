@@ -120,6 +120,10 @@ function core() {
                 log.force('\x1b[36m%s\x1b[0m', '   ' + cjs.i18n.__('CrabJS started!'));
                 log.force('\x1b[36m%s\x1b[0m', '   ' + cjs.i18n.__('Server started at "') + serverInfo.host + ':' + serverInfo.bind + '"');
                 log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------\n');
+                if (cjs.config.swagger && cjs.config.swagger.enabled) {
+                    log.force('\x1b[36m%s\x1b[0m', '   ' + cjs.i18n.__('Swagger address: "') + serverInfo.host + ':' + serverInfo.bind + cjs.config.swagger.path + '"');
+                    log.force('\x1b[33m%s\x1b[0m', '--------------------------------------------------\n');
+                }
             }
         }
     }
@@ -163,7 +167,7 @@ function core() {
             const Security = require("./security");
             instance.security = Security;
 
-            expressInstance.use((req, res, next) => {
+            /*expressInstance.use((req, res, next) => {
                 //if (req.get('Content-Type') === "application/json")
                 bodyParser.json()(req, res, err => {
                     if (err) {
@@ -174,6 +178,29 @@ function core() {
 
                     next();
                 });
+            });*/
+
+            expressInstance.use(express.json());
+
+            expressInstance.use((err, req, res, next) => {
+                if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+                    const utils = require('./utils');
+                    utils.responseError(res, cjs.i18n.__('Error parsing JSON content on body. Check the syntax.'), 406);
+                    return;
+                }
+                next();
+            });
+
+            expressInstance.use((req, res, next) => {
+                for (let key in req.body) {
+                    try {
+                        req.body[key] = JSON.parse(req.body[key]); // Se for JSON válido, converte
+                    } catch (e) {
+                        // Mantém como string se não for JSON válido
+                    }
+                }
+
+                next();
             });
 
             expressInstance.use(Security);
@@ -232,7 +259,7 @@ function core() {
         if (bind !== "80" && bind !== "443")
             cjs.config.host_address += ":" + bind;
         return {
-            host:host,
+            host: host,
             bind: bind,
             host_address: cjs.config.host_address
         }

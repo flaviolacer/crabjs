@@ -88,5 +88,10 @@
 	"Get entity from repository item": "Get entity from repository item",
 	"Get entity from repository tax": "Get entity from repository tax",
 	"Get entity from repository statement": "Get entity from repository statement",
-	"Get entity from repository rating": "Get entity from repository rating"
+	"Get entity from repository rating": "Get entity from repository rating",
+	"Get entity from repository ads": "Get entity from repository ads",
+	"Get entity from repository post": "Get entity from repository post",
+	"Swagger started!": "Swagger started!",
+	"Swagger address: \"": "Swagger address: \"",
+	"Get entity from repository post_vote": "Get entity from repository post_vote"
 }
