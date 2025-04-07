@@ -1,11 +1,18 @@
 CrabJS command line examples:
 
+# to start a project
+init                            to create project on current path
+
+# example
+cjs init
+
 create controller [name]        to create a name controller to project
 create entity [name]            to create an entity to project
+
 -h |--help                      show this information
 
-# to create controller
+# example  to create controller
 cjs create controller mycontroller
 
-# to create entity
+# example to create entity
 cjs create entity myentity
