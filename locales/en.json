@@ -93,5 +93,11 @@
 	"Get entity from repository post": "Get entity from repository post",
 	"Swagger started!": "Swagger started!",
 	"Swagger address: \"": "Swagger address: \"",
-	"Get entity from repository post_vote": "Get entity from repository post_vote"
+	"Get entity from repository post_vote": "Get entity from repository post_vote",
+	"Entity definition not found. Missing create it \"{{name}}\"?": "Entity definition not found. Missing create it \"{{name}}\"?",
+	"Get entity from repository folder": "Get entity from repository folder",
+	"Get entity from repository image": "Get entity from repository image",
+	"Get entity from repository workspace": "Get entity from repository workspace",
+	"Express method function ({{method}}) not found at \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n": "Express method function ({{method}}) not found at \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n",
+	"Get entity from repository video": "Get entity from repository video"
 }

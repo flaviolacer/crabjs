@@ -1,8 +1,8 @@
-const cjs = require("./cjs");
-const log = require('./log');
-const Error = require("./error");
-const userTokenStorage = require('./security/tokens-user');
-const revokedTokenStorage = require('./security/tokens-revoked');
+const cjs = require("./cjs.cjs");
+const log = require('./log.cjs');
+const Error = require("./error.cjs");
+const userTokenStorage = require('./security/tokens-user.cjs');
+const revokedTokenStorage = require('./security/tokens-revoked.cjs');
 const jwt = require('jsonwebtoken');
 let securityConfig;
 let tokenExpires, encryptionKey, refreshTokenEncryptionSecretKey, refreshTokenExpires;
@@ -24,8 +24,8 @@ let checkOAuth2Auth = async (req) => {
     }
 
     // check if there is clientId and clientSecret on config and matches with sent
-    let testClientId = query[securityConfig.jwt.sign_client_id_field] || body[securityConfig.jwt.sign_client_id_field] || headers[securityConfig.jwt.sign_client_id_field];
-    let testClientSecret = query[securityConfig.jwt.sign_client_secret_field] || body[securityConfig.jwt.sign_client_secret_field] || headers[securityConfig.jwt.sign_client_secret_field];
+    let testClientId = !securityConfig.only_header ? query[securityConfig.jwt.sign_client_id_field] || body[securityConfig.jwt.sign_client_id_field] || headers[securityConfig.jwt.sign_client_id_field] : headers[securityConfig.jwt.sign_client_id_field];
+    let testClientSecret = !securityConfig.only_header ? query[securityConfig.jwt.sign_client_secret_field] || body[securityConfig.jwt.sign_client_secret_field] || headers[securityConfig.jwt.sign_client_secret_field] : headers[securityConfig.jwt.sign_client_secret_field];
 
     if (!securityConfig.security_repository || securityConfig.security_repository.token_storage_type === "memory") { // config auth api
         if (isEmpty(cjs.configSecureCredentials)) {
@@ -365,7 +365,8 @@ async function security(req, res, next) {
             }
             // remove expired tokens
             await removeExpiredTokens();
-        } else if (urlInfo.pathname.contains(cjs.secBypassRoutes)) next();
+        } else if (stringContains(urlInfo.pathname, cjs.secBypassRoutes))
+            next();
         else { // not bypassed
             // check if token was sent using token field
             if (isAuthenticated) {

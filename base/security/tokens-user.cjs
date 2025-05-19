@@ -1,9 +1,9 @@
-const cjs = require("../cjs");
+const cjs = require("../cjs.cjs");
 const path = require("path");
 const fs = require("fs");
-const utils = require("../utils");
-const log = require("../log");
-const revokedTokenStorage = require('./tokens-revoked');
+const utils = require("../utils.cjs");
+const log = require("../log.cjs");
+const revokedTokenStorage = require('./tokens-revoked.cjs');
 
 class tokensUsers {
     type = "file";
@@ -180,7 +180,7 @@ class tokensUsers {
             } : repositoryInfo.data;
 
             if (isEmpty(repositoryInfo)) {
-                repositoryInfo = this.em.newEntity(this.entity);
+                repositoryInfo = await this.em.newEntity(this.entity);
                 repositoryInfo.client_id = clientId;
             }
 
@@ -222,9 +222,9 @@ class tokensUsers {
             await this.em.removeEntities(this.entity, {client_id: clientId});
         }
 
-        this.removeExpired = () => {
+        this.removeExpired = async () => {
             // remove revoked tokens
-            let revokedStorage = this.em.loadEntity(this.entity);
+            let revokedStorage = await this.em.loadEntity(this.entity);
             revokedStorage.removeExpired();
         }
         return this;

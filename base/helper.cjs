@@ -52,6 +52,19 @@ Array.prototype.contains = function (k) {
     return false;
 };
 
+global.stringContains = function (str, it, delimiter) {
+    delimiter = delimiter || "";
+    if (isString(it))
+        return str.toLowerCase().indexOfRegex((delimiter + it + delimiter).toLowerCase()) !== -1;
+    else if (isArray(it)) {
+        for (let i = 0, j = it.length; i < j; i++) {
+            if (str.toLowerCase().indexOfRegex((delimiter + it[i] + delimiter).toLowerCase()) !== -1)
+                return true;
+        }
+    }
+    return false;
+};
+
 global.containsObjectKey = function (obj, k, key) {
     for (let p in obj) {
         let comp_value = obj[p][key];
@@ -158,6 +171,9 @@ global.verify_password = function (dbString, password) {
     let old_hash = pieces[3];
     let hashLength = (Buffer.from(old_hash, "base64")).length;
     let keybase = false;
+
+    if (typeof password !== "string")
+        password = password.toString();
 
     pbkdf2(password, salt, iterations, hashLength, crypt_info[1], function (err, key) {
         if (err)

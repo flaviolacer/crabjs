@@ -11,8 +11,8 @@ function annotation() {
             try {
                 let fileContent = fs.readFileSync(file, {encoding: 'utf-8'});
                 let annotations = instance.getAnnotations(fileContent);
-                callback(null, annotations);
                 resolve(annotations);
+                callback(null, annotations);
             } catch (e) {
                 reject(e);
                 callback(e);
@@ -30,7 +30,7 @@ function annotation() {
     }
 
     this.getAnnotations = (fileContent) => {
-        let annotationMainRegex = /(\/\*\*(([\s\n*@a-zA-Zà-üÀ-Ü0-9<>_\-=;'",():#.\[\]$]*)|([\s\n*@a-zA-Zà-üÀ-Ü0-9<>_\-=;'",():\/#.$\[\]]*))\*\/)(([a-zA-Z0-9_.=\s])*)/gm;
+        let annotationMainRegex = /(\/\*\*(([\s\n*@a-zA-Zà-üÀ-Ü0-9<>_\-='",():#.\[\]$]*)|([\s\n*@a-zA-Zà-üÀ-Ü0-9<>_\-='",():\/#.$\[\]]*))\*\/)(([a-zA-Z0-9_.=\s]?)*)/gm;
 
         let result = {
             classes: [],
@@ -72,7 +72,10 @@ function annotation() {
                 }
             } else { // field
                 let rawField = matches[i][5];
-                blockKey = rawField.replaceAll(/(var|let|this.|const|[ ;=\n])/g, '');
+                if (rawField.contains('='))
+                    rawField = rawField.substring(0, rawField.indexOf('=')).trim();
+
+                blockKey = rawField.replaceAll(/(var|[(\s)^]let(\s)|async|this.|const|[ ;=\n])/g, '');
             }
 
             annotationMatches = [...match.matchAll(annotationRegex)];

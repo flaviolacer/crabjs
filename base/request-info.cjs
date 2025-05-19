@@ -1,4 +1,4 @@
-const log = require('./log');
+const log = require('./log.cjs');
 let RequestInfo = function () {
     return function (req, res, next) {
         let unflatten = require("flat").unflatten;

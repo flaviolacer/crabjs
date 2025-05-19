@@ -1,8 +1,8 @@
-const cjs = require("../cjs");
+const cjs = require("../cjs.cjs");
 const path = require("path");
 const fs = require("fs");
-const utils = require("../utils");
-const log = require("../log");
+const utils = require("../utils.cjs");
+const log = require("../log.cjs");
 
 class tokensRevoked {
     type = "file";
@@ -101,16 +101,16 @@ class tokensRevoked {
             return await this.em.getEntity(this.entity, {token: key});
         }
         this.save = async (clientId, key, value) => {
-            let tokenItem = this.em.setEntity(this.entity, {token: key, client_id: clientId, data: value});
+            let tokenItem = await em.setEntity(this.entity, {token: key, client_id: clientId, data: value});
             await tokenItem.save();
         }
         this.remove = async (key) => {
             await this.em.remove(this.entity, {token: key});
         }
 
-        this.removeExpired = () => {
+        this.removeExpired = async () => {
             // remove revoked tokens
-            let revokedStorage = this.em.loadEntity(this.entity);
+            let revokedStorage = await this.em.loadEntity(this.entity);
             revokedStorage.removeExpired();
         }
 

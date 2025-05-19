@@ -1,6 +1,6 @@
-require("../../base/helper");
-let cjs = require('../../base/cjs');
-const core = require("../../base/core");
+require("../../base/helper.cjs");
+let cjs = require('../../base/cjs.cjs');
+const core = require("../../base/core.cjs");
 const assert = require('assert');
 
 describe('Testing loading config functions', function() {

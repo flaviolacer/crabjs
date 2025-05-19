@@ -1,8 +1,8 @@
-require("../../base/helper");
-let cjs = require('../../base/cjs');
+require("../../base/helper.cjs");
+let cjs = require('../../base/cjs.cjs');
 const assert = require('assert');
-cjs.entityManager = require("../../base/entity-manager");
-const repositoryManager = require("../../base/repository-manager");
+cjs.entityManager = require("../../base/entity-manager.cjs");
+const repositoryManager = require("../../base/repository-manager.cjs");
 
 const repositoryTestConfig = {
     "default": "mongodb",
@@ -43,7 +43,7 @@ describe('Testing repository functions', function () {
     });
     it('Test insert entity on repository', async () => {
         try {
-            let newProduct = em.newEntity(testEntityName);
+            let newProduct = await em.newEntity(testEntityName);
             newProduct._id = testProductItem._id;
             newProduct.name = testProductItem.name;
             newProduct.description = testProductItem.description;
@@ -123,7 +123,7 @@ describe('Testing repository functions', function () {
     it('Test custom entity base', async () => {
         try {
             // search for entities
-            let saveRet = em.newEntity('product_custom');
+            let saveRet = await em.newEntity('product_custom');
             assert.equal(saveRet.save(), "save", "Failed on validation on get entities");
         } catch (e) {
             assert.fail("Failed to get entity:" + e.message + e.stack);

@@ -1,11 +1,11 @@
-require("../../base/helper");
-let cjs = require('../../base/cjs');
+require("../../base/helper.cjs");
+let cjs = require('../../base/cjs.cjs');
 cjs.config = { ... require("../../defaults.json") };
 cjs.config.app_root = __dirname;
 cjs.config.hide_start_log = true;
 // set entity directory
-cjs.config.server_entities_path = "../data/entity";
-const core = require('../../base/core');
+cjs.config.server_entities_path = "../data/entity.cjs";
+const core = require('../../base/core.cjs');
 cjs.i18n = core.loadLocales();
 const assert = require('assert');
 

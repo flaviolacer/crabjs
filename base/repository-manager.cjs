@@ -1,6 +1,6 @@
-const cjs = require("./cjs");
-const log = require('./log');
-const Constants = require("./constants");
+const cjs = require("./cjs.cjs");
+const log = require('./log.cjs');
+const Constants = require("./constants.cjs");
 
 /**
  * Repository manager
@@ -24,10 +24,12 @@ class RepositoryManager {
 
         // get connection info
         let connectionInfo = cjs.config.repository[repository];
-        let connectionDriver = connectionInfo.driver || repository;
+        let connectionDriver = connectionInfo.driver || "mongodb";
 
-        if (isEmpty(RepositoryManager.connections[repository]))
-            RepositoryManager.connections[repository] = this.loadDriver(connectionDriver);
+        if (isEmpty(RepositoryManager.connections[repository])) {
+            let Driver = this.loadDriver(connectionDriver);
+            RepositoryManager.connections[repository] = new Driver();
+        }
 
         RepositoryManager.connections[repository].__connectionInfo = connectionInfo;
         return RepositoryManager.connections[repository];
@@ -35,11 +37,12 @@ class RepositoryManager {
 
     loadDriver(repository) {
         let driverLib = './repository-drivers/' + repository;
-        if (!require("./utils").checkLibExists(driverLib)) {
+        let driverFile = require("./utils.cjs").checkLibExists(driverLib);
+        if (!driverFile) {
             log.error(cjs.i18n.__("Cannot load driver \"{{repository}}\". Perhaps still doesn't have driver for that. Check if the name is ok. \n", {repository: repository}));
             return null;
         } else
-            return require(driverLib);
+            return require(driverFile);
     }
 
     async save(options) {

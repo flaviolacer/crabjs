@@ -1,16 +1,16 @@
-const rm = require("../../base/repository-manager");
-const cjs = require("../../base/cjs");
+const rm = require("../../base/repository-manager.cjs");
+const cjs = require("../../base/cjs.cjs");
 
 /**
  * @Entity
- * @RepositoryName('__revoked_storage')
+ * @RepositoryName('__access_storage')
  */
-function __revoked_storage() {
+function __access_storage() {
     /**
      * @field("_id")
      * @primaryKey
      **/
-    let token;
+    let _id;
 
     /** @field */
     let client_id;
@@ -18,10 +18,16 @@ function __revoked_storage() {
     /** @field */
     let data;
 
+    /**
+     * @field
+     * @type = boolean
+     **/
+    let refresh_token;
+
     this.removeExpired = async function () {
-        let entityName = "__revoked_storage";
+        let entityName = "__access_storage";
         let md = rm.getConnection();
-        let entity = cjs.entityManager.loadEntity(entityName);
+        let entity = await cjs.entityManager.loadEntity(entityName);
         // specific to mongodb
         let options = {
             "entity": entityName,
@@ -50,11 +56,11 @@ function __revoked_storage() {
             ]
         };
         let expiredTokens = (await md.aggregate(options)).results;
-        for (let i = 0,j = expiredTokens.length;i < j; i++) {
+        for (let i = 0, j = expiredTokens.length; i < j; i++) {
             let expiredToken = expiredTokens[i];
-            await md.remove({entity:entity, filter: {_id: expiredToken._id}, definitions: entity.__definitions });
+            await md.remove({entity: entity, filter: {_id: expiredToken._id}, definitions: entity.__definitions});
         }
     }
 }
 
-module.exports = __revoked_storage;
+module.exports = __access_storage;

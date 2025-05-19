@@ -1,6 +1,6 @@
-const cjs = require("./cjs");
-const repositoryManager = require("./repository-manager");
-const log = require('./log');
+const cjs = require("./cjs.cjs");
+const repositoryManager = require("./repository-manager.cjs");
+const log = require('./log.cjs');
 
 function Entity() {
     /**

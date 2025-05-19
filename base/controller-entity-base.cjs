@@ -1,6 +1,6 @@
-const cjs = require("./cjs");
-const utils = require('./utils');
-const Constants = require("./constants");
+const cjs = require("./cjs.cjs");
+const utils = require('./utils.cjs');
+const Constants = require("./constants.cjs");
 
 function ControllerEntityBase() {
     /**
@@ -13,9 +13,9 @@ function ControllerEntityBase() {
         let record;
         if (!isEmpty(req.body)) {
             if (!isArray(req.body)) {
-                let newProduct = em.newEntity(this.__entity.entityName);
+                let newEntity = await em.newEntity(this.__entity.entityName);
 
-                extend(newProduct, req.body);
+                extend(newEntity, req.body);
                 let options = {};
                 let filter = req.params.filter;
                 if (!isEmpty(filter)) { // update registry
@@ -25,18 +25,18 @@ function ControllerEntityBase() {
                     }
                     // get first primary key
                     let primaryKey = this.__entity.__definitions.primaryKeys[0].fname;
-                    newProduct[primaryKey] = filter;
-                    let returnUpdate = await newProduct.save();
-                    record = extend(newProduct, returnUpdate);
+                    newEntity[primaryKey] = filter;
+                    let returnUpdate = await newEntity.save();
+                    record = extend(newEntity, returnUpdate);
                 } else {
-                    if (newProduct.__filter) {
-                        options.filter = newProduct.__filter;
+                    if (newEntity.__filter) {
+                        options.filter = newEntity.__filter;
                         options.filter.__update_multiple = true;
-                        delete newProduct.__filter;
+                        delete newEntity.__filter;
                     }
 
                     try {
-                        record = await newProduct.save(options);
+                        record = await newEntity.save(options);
                     } catch (e) {
                         let errorMessage;
                         let errorCode = 406;
@@ -119,11 +119,13 @@ function ControllerEntityBase() {
 
         let dataObject;
         if (singleRecord) {
-            dataObject = await cjs.entityManager.getEntity(this.__entity.entityName, filter);
+            dataObject = await cjs.entityManager.getEntity(this.__entity.entityName, filter, options);
         } else {
             dataObject = await cjs.entityManager.getEntities(this.__entity.entityName, filter, options);
         }
-        utils.responseData(res, dataObject, {type: "entity"});
+        if (res)
+            utils.responseData(res, dataObject, {type: "entity"});
+        return dataObject;
     }
     /**
      * Update entity in repository

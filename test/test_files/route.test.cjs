@@ -1,9 +1,9 @@
 // noinspection ExceptionCaughtLocallyJS
 
-require("../../base/helper");
-let cjs = require('../../base/cjs');
-const core = require("../../base/core");
-const routerManager = require('../../base/router-manager');
+require("../../base/helper.cjs");
+let cjs = require('../../base/cjs.cjs');
+const core = require("../../base/core.cjs");
+const routerManager = require('../../base/router-manager.cjs');
 const assert = require('assert');
 const axios = require('axios').default;
 const defaultUrl = "http://127.0.0.1:3999"; // default loopback

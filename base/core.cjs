@@ -3,8 +3,8 @@ const express = require('express');
 const multer = require('multer');
 const http = require("http");
 const https = require("https");
-const log = require("./log");
-let cjs = require("./cjs");
+const log = require("./log.cjs");
+let cjs = require("./cjs.cjs");
 const fs = require("fs");
 const {I18n} = require('i18n');
 
@@ -151,7 +151,8 @@ function core() {
 
             // configure the app to use bodyParser()
             expressInstance.use(bodyParser.urlencoded({
-                extended: true
+                extended: true,
+                limit: cjs.config.post_max_size
             }));
 
             // upload files middleware
@@ -161,10 +162,10 @@ function core() {
             }).any());
 
             // log request content
-            expressInstance.use(require('./request-info')());
+            expressInstance.use(require('./request-info.cjs')());
 
             // set security
-            const Security = require("./security");
+            const Security = require("./security.cjs");
             instance.security = Security;
 
             /*expressInstance.use((req, res, next) => {
@@ -180,11 +181,11 @@ function core() {
                 });
             });*/
 
-            expressInstance.use(express.json());
+            expressInstance.use(express.json({ limit: cjs.config.post_max_size }));
 
             expressInstance.use((err, req, res, next) => {
                 if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-                    const utils = require('./utils');
+                    const utils = require('./utils.cjs');
                     utils.responseError(res, cjs.i18n.__('Error parsing JSON content on body. Check the syntax.'), 406);
                     return;
                 }

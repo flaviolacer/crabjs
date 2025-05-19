@@ -1,12 +1,12 @@
-const log = require('../log');
-let cjs = require("../cjs");
+const log = require('../log.cjs');
+let cjs = require("../cjs.cjs");
 
 const MongoDB = require('mongodb');
 const Double = MongoDB.Double;
-const Error = require("../error");
-const Constants = require("../constants");
+const Error = require("../error.cjs");
+const Constants = require("../constants.cjs");
 
-function mongoDB() {
+function MongoDBDriver() {
     let instance = this;
     this.db = null;
     this.client = null;
@@ -54,6 +54,26 @@ function mongoDB() {
                     case "__or":
                         filter['$or'] = filter["__or"];
                         delete filter[filterKey];
+                        break;
+                    case "__term":
+                        delete filter[filterKey];
+
+                        if (isEmpty(filterValue) || isEmpty(filterValue["value"]))
+                            continue;
+
+                        let _orSearch = [];
+                        let termInfo = filterValue;
+                        if (isString(termInfo["fields"]))
+                            termInfo["fields"] = termInfo["fields"].split(",");
+                        for (let i = 0; i < termInfo["fields"].length; i++) {
+                            let _orObj = {};
+                            _orObj[termInfo["fields"][i]] = new RegExp(termInfo["value"], "i");
+                            _orSearch.push(_orObj);
+                        }
+
+                        filter['$and'] = filter['$and'] || [];
+                        filter['$and'].push({$or: _orSearch});
+
                         break;
                 }
             } else if (isObject(filterValue) || (isString(filterValue) && filterValue.trim().startsWith("{"))) { // possibli JSON
@@ -225,6 +245,10 @@ function mongoDB() {
                 options.page_number = parseInt(filter["__page"]);
                 delete filter["__page"];
             }
+            if (!isEmpty(filter["__page_size"])) {
+                options.page_size = parseInt(filter["__page_size"]);
+                delete filter["__page_size"];
+            }
 
             if (!found && !params.filter["__late_match"]) pipeline.push({$match: filter});
 
@@ -243,7 +267,7 @@ function mongoDB() {
                     let entityDefinition = params.getEntityDefinition(lookup.entity);
                     pipeline.push({
                         "$lookup": {
-                            "from": entityDefinition.entity.data.RepositoryName || lookup.entity,
+                            "from": (entityDefinition.entity) ? entityDefinition.entity.data.RepositoryName : lookup.entity,
                             "localField": lookup.local || lookup.localField,
                             "foreignField": lookup.foreign || lookup.foreignField || "_id",
                             "as": localAs
@@ -262,6 +286,11 @@ function mongoDB() {
             if (params.filter["__late_match"]) {
                 pipeline.push({$match: filter});
                 delete params.filter["__late_match"];
+            }
+
+            if (params.filter["__sort"]) {
+                options.sort = params.filter["__sort"];
+                delete params.filter["__sort"];
             }
 
             // sort order
@@ -457,7 +486,7 @@ function mongoDB() {
                     continue;
                 }
                 let fieldName = (isEmpty(fields[fieldRef].field)) ? fieldRef : fields[fieldRef].field;
-                if (typeof fields[fieldRef].required !== "undefined" && ((isEmpty(entity[fieldRef]) && isEmpty(filter)) || (!isEmpty(filter) && entity.hasOwnProperty(fieldRef) && isEmpty(entity[fieldRef])))) { // required fields
+                if (typeof fields[fieldRef].required !== "undefined" && ((isEmpty(entity[fieldRef]) && isEmpty(filter)) || (!isEmpty(filter) && entity.hasOwnProperty(fieldRef) && (typeof entity[fieldRef] === null)))) { // required fields
                     log.error(cjs.i18n.__("Required field \"{{fieldName}}\" was not set on entity \"{{entityName}}\"", {
                         fieldName: fieldName, entityName: entity.entityName
                     }));
@@ -727,4 +756,4 @@ function mongoDB() {
     this.longFromNumber = MongoDB.Long.fromNumber
 }
 
-module.exports = new mongoDB();
+module.exports = MongoDBDriver;

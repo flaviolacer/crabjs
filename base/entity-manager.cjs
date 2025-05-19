@@ -1,9 +1,9 @@
 const path = require("path");
 const fs = require('fs');
-const log = require('./log');
-const annotation = require('./annotation');
-const repositoryManager = require("./repository-manager");
-let cjs = require("./cjs");
+const log = require('./log.cjs');
+const annotation = require('./annotation.cjs');
+const repositoryManager = require("./repository-manager.cjs");
+let cjs = require("./cjs.cjs");
 
 /**
  * @class EntityManager
@@ -11,7 +11,6 @@ let cjs = require("./cjs");
  */
 function EntityManager() {
     let instance = this;
-    let config = cjs.config;
 
     // initialize entityDefinitions
     this.__entityDefinitions = {};
@@ -20,9 +19,16 @@ function EntityManager() {
         // check if already exists in memory
         if (!cjs.entityManager.__entityDefinitions[name]) {
             let entityFilename = name.contains("\\.") ? name : name + '.js';
-            let entityFilepath = path.join(config.server_entities_path, entityFilename);
+            let entityFilepath = path.join(cjs.config.server_entities_path, entityFilename);
             if (!fs.existsSync(entityFilepath)) {
-                entityFilepath = path.join(__dirname,"./entity/", entityFilename);
+                // test commonjs
+                let commonjsFile = entityFilepath.replaceAll("\\.js", ".cjs");
+                if (!fs.existsSync(commonjsFile)) {
+                    //system
+                    entityFilepath = path.join(__dirname, "./entity/", entityFilename.replaceAll("\\.js", ".cjs"));
+                } else {
+                    entityFilepath = commonjsFile;
+                }
             }
 
             let annotations = annotation.parseSync(entityFilepath);
@@ -34,6 +40,7 @@ function EntityManager() {
             // when class, merge function and classes - ES6
             if (annotations.classes) {
                 let classKeys = Object.keys(annotations.classes);
+                annotations.functions = annotations.functions || {};
                 for (let i = 0, j = classKeys.length; i < j; i++)
                     annotations.functions[classKeys[i]] = annotations.classes[classKeys[i]];
             }
@@ -56,31 +63,45 @@ function EntityManager() {
      * Initialize entity manager
      */
     this.init = () => {
-        if (isEmpty(config.server_entities_path) || config.server_entities_path.startsWith('.') || !config.server_entities_path.startsWith('/'))
-            cjs.config.server_entities_path = path.join(config.app_root, config.server_entities_path);
+        if (isEmpty(cjs.config.server_entities_path) || cjs.config.server_entities_path.startsWith('.') || !cjs.config.server_entities_path.startsWith('/'))
+            cjs.config.server_entities_path = path.join(cjs.config.app_root, cjs.config.server_entities_path);
     };
 
-    let createEntity = name => {
+    let createEntity = async name => {
         if (isEmpty(name)) {
             log.error(cjs.i18n.__("You must specify the name of the entity to create a new one."));
             return;
         }
         let entityFilename = name.contains("\\.") ? name : name + '.js';
-        let entityFilepath = path.join(config.server_entities_path, entityFilename);
+        let entityFilepath = path.join(cjs.config.server_entities_path, entityFilename);
         if (!fs.existsSync(entityFilepath)) {
-            // system entity?
-            entityFilepath = path.join(__dirname,"./entity/", entityFilename);
-            if(!fs.existsSync(entityFilepath)) {
-                log.error(cjs.i18n.__('Entity definition not found. Missing create it {{name}}?', {name: name}));
-                return;
-            }
+            let commonjsEntityFile = entityFilepath.replaceAll("\\.js", ".cjs");
+            if (!fs.existsSync(commonjsEntityFile)) {
+                // system entity?
+                entityFilepath = path.join(__dirname, "./entity/", entityFilename.replaceAll("\\.js", ".cjs"));
+                if (!fs.existsSync(entityFilepath)) {
+                    log.error(cjs.i18n.__('Entity definition not found. Missing create it "{{name}}"?', {name: name}));
+                    return;
+                }
+            } else
+                entityFilepath = commonjsEntityFile;
         }
         // create entity and extend it to base
         let newEntityInstantiated = require(entityFilepath);
-        if (newEntityInstantiated.constructor.name.toLowerCase() === "function") newEntityInstantiated = new newEntityInstantiated();
-        // extend entitybase
+        if (newEntityInstantiated.constructor && newEntityInstantiated.constructor.name.toLowerCase() === "function") newEntityInstantiated = new newEntityInstantiated();
+        else if (newEntityInstantiated.__esModule) {
+            let __esImport = await import(entityFilepath);
+            if (__esImport.default && typeof __esImport.default === "function") {
+                newEntityInstantiated = new __esImport.default();
+            } else if (__esImport.default && typeof __esImport.default === "object") {
+                newEntityInstantiated = __esImport.default;
+            } else {
+                newEntityInstantiated = __esImport;
+            }
+        }
 
-        let definitions  = getEntityDefinition(name);
+        // extend entitybase
+        let definitions = getEntityDefinition(name);
         let annotationMapKeys = Object.keys(definitions);
         const entries = Object.entries(definitions.entity.data);
         let headerAnnotationKeys =
@@ -88,23 +109,26 @@ function EntityManager() {
                 return key.toLowerCase();
             });
         let headerAnnotations = Object.fromEntries(
-                entries.map(([key, value]) => {
-                    return [key.toLowerCase(), value];
-                }),
-            );
+            entries.map(([key, value]) => {
+                return [key.toLowerCase(), value];
+            }),
+        );
 
         let EntityBase;
         let customBaseLib = headerAnnotationKeys.contains("custom") || headerAnnotationKeys.contains("custombase");
         if (customBaseLib) {
-            let customEntityPath = (headerAnnotationKeys.contains("custompath")) ? headerAnnotationKeys["custompath"] : path.join(config.server_entities_path,"custom");
+            let customEntityPath = (headerAnnotationKeys.contains("custompath")) ? headerAnnotationKeys["custompath"] : path.join(cjs.config.server_entities_path, "custom");
             try {
-                EntityBase = require(path.join(customEntityPath, headerAnnotations["custom"] || headerAnnotations["custombase"] + ".js"));
-            } catch(e) {
+                let entityBasefile = path.join(customEntityPath, headerAnnotations["custom"] || headerAnnotations["custombase"] + ".js");
+                if (!fs.existsSync(entityBasefile))
+                    entityBasefile = entityBasefile.replaceAll("\\.js", ".cjs");
+                EntityBase = require(entityBasefile);
+            } catch (e) {
                 log.error(cjs.i18n.__('Error loading custom entity. Verify if file exists on: {{customBaseLib}} ', {customBaseLib: customBaseLib}));
                 return;
             }
         } else {
-            EntityBase = require('./entity-base');
+            EntityBase = require('./entity-base.cjs');
         }
 
         let entityBase = new EntityBase();
@@ -130,8 +154,8 @@ function EntityManager() {
      * @param initContent
      * @returns Entity
      */
-    this.setEntity = (name, initContent) => {
-        let newEntityObj = createEntity(name);
+    this.setEntity = async (name, initContent) => {
+        let newEntityObj = await createEntity(name);
         if (initContent) { // map content to entity definitions
             if (!isObject(initContent))
                 return newEntityObj;
@@ -162,8 +186,8 @@ function EntityManager() {
      * @param name
      * @returns Entity
      */
-    this.loadEntity = (name) => {
-         return createEntity(name);
+    this.loadEntity = async (name) => {
+        return await this.createEntity(name);
     };
 
     /**
@@ -324,22 +348,22 @@ function EntityManager() {
             log.info(cjs.i18n.__("Retrieving entities from repository..."));
             let entityDefinitions = getEntityDefinition(entity);
             if (isEmpty(entityDefinitions)) {
-                //log.error(cjs.i18n.__("No entity definitions found. Did you miss the "));
+                log.error(cjs.i18n.__(`No entity definitions found for "${entity}". Did you miss the entity file on directory?`));
                 reject(null);
                 return;
             }
 
             try {
                 let entities = await repositoryManager.find({
-                    repository: entityDefinitions.entity.repository,
+                    repository: (entityDefinitions.entity && entityDefinitions.entity.data ) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
                     getEntityDefinition: getEntityDefinition,
                     filter: filter,
                     options: {
-                        page_size: (!isEmpty(options.page_size)) ? options.page_size : config.repository_page_size || 10,
+                        page_size: (!isEmpty(options.page_size)) ? options.page_size : cjs.config.repository_page_size || 10,
                         page_number: options.page_number || 1,
-                        sort : options.sort,
+                        sort: options.sort,
                         load: options.load,
                         cursor: options.cursor
                     }
@@ -353,8 +377,8 @@ function EntityManager() {
                         resolve(entities)
                     else {
                         let returnData = [];
-                        for(let i = 0,j = entities.records.length;i<j;i++) { // converting data
-                            returnData.push(this.newEntity(entity, entities.records[i]));
+                        for (let i = 0, j = entities.records.length; i < j; i++) { // converting data
+                            returnData.push(await this.newEntity(entity, entities.records[i]));
                         }
                         entities.records = returnData;
                         resolve(entities);
@@ -363,7 +387,7 @@ function EntityManager() {
                     log.info("Entities not found");
                     resolve(null);
                 }
-            } catch(e) {
+            } catch (e) {
                 log.error(cjs.i18n.__("Could not retrieve data from repository."));
                 log.error(e);
                 reject(e);
@@ -463,7 +487,7 @@ function EntityManager() {
 
                 if (response)
                     log.info("Data removed");
-                 else
+                else
                     log.info("Entities not removed");
 
                 resolve(response);

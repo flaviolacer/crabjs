@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require('fs');
-const cjs = require("./cjs");
+const cjs = require("./cjs.cjs");
 const handlebars = require("handlebars");
 const swaggerUi = require("swagger-ui-express");
 

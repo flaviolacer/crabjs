@@ -1,6 +1,6 @@
-const log = require('./log');
+const log = require('./log.cjs');
 const fs = require('fs');
-const cjs = require("./cjs");
+const cjs = require("./cjs.cjs");
 const handlebars = require("handlebars");
 
 /**
@@ -11,10 +11,15 @@ function Util() {
     this.checkLibExists = (libName) => {
         try {
             require.resolve(libName);
-            return true;
+            return libName;
         } catch (e) {
-            return false;
         }
+        try {
+            require.resolve(`${libName}.cjs`);
+            return `${libName}.cjs`;
+        } catch (e) {
+        }
+        return false;
     }
 
     this.checkCachePath = () => {
@@ -42,8 +47,10 @@ function Util() {
     };
 
     this.responseError = function (res, message, code, data) {
+        if (isEmpty(res) || res.headersSent) return;
+
         code = code || 500;
-        let ResponseError = require("./response-error");
+        let ResponseError = require("./response-error.cjs");
         let responseError = new ResponseError(message, code);
         responseError.type = "error";
         if (data)
@@ -58,7 +65,7 @@ function Util() {
     }
 
     this.responseData = function (res, content, params) {
-        if (res.headersSent) return;
+        if (isEmpty(res) || res.headersSent) return;
         let response = {
             content: content
         };

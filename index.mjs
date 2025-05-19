@@ -1,14 +1,16 @@
 /// start CrabJS
-require("./base/helper")
-const log = require('./base/log');
-let cjs = require("./base/cjs");
-cjs.config = require("./defaults.json")
-let core = require("./base/core");
-const utils = require("./base/utils");
-let routerManager = require("./base/router-manager");
-let entityManager = require("./base/entity-manager");
-let repositoryManager = require("./base/repository-manager");
-const path = require("path");
+import "./base/helper.cjs";
+import log from './base/log.cjs';
+import cjs from "./base/cjs.cjs";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+cjs.config = require("./defaults.json");
+import core from "./base/core.cjs";
+import utils from "./base/utils.cjs";
+import path from "path";
+import routerManager from "./base/router-manager.cjs";
+import entityManager from "./base/entity-manager.cjs";
+import repositoryManager from "./base/repository-manager.cjs";
 
 /**
  * @typedef Cjs
@@ -26,7 +28,7 @@ const path = require("path");
  * @param {bool} noserver
  * @returns {Cjs}
  */
-exports.start = function (appDir, noserver) {
+function start(appDir, noserver) {
     process.env.DEBUG = "i18n:debug";
     cjs.entityManager = null;
     // global config
@@ -70,3 +72,5 @@ exports.start = function (appDir, noserver) {
     /** @type {Cjs} */
     return cjs;
 }
+
+export default { start };

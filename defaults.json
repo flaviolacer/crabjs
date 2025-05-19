@@ -7,10 +7,12 @@
   "server_entities_path": "entity",
   "multer_path": "uploads/",
   "multer_inmemory": true,
+  "post_max_size" : "10mb",
   "debug": {
     "level": "error"
   },
   "security": {
+    "only_header" : true,
     "jwt": {
       "token_signin_route": "/auth/signin",
       "token_field": "access_token",

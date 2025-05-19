@@ -1,4 +1,4 @@
-let cjs = require('../base/cjs');
+let cjs = require('../base/cjs.cjs');
 const debugLevel = {
     "debug": {value: 0},
     "info": {value: 1},
