@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 const path = require('path');
-require(path.join(__dirname,"../base/helper"));
-const cliBase = require(path.join(__dirname,"../base/cli-base"));
-const log = require("../base/log");
+require(path.join(__dirname,"../base/helper.cjs"));
+const cliBase = require(path.join(__dirname,"../base/cli-base.cjs"));
+const log = require("../base/log.cjs");
 
 const [, , ...args] = process.argv;
 const pjson = require('../package.json');

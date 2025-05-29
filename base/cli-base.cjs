@@ -1,16 +1,16 @@
 const fs = require('fs');
 const path = require("path");
 const handlebars = require("handlebars");
-const cjs = require("./cjs");
+const cjs = require("./cjs.cjs");
 cjs.config = require("../defaults.json")
 // app libs
-const core = require("./core");
+const core = require("./core.cjs");
 // load default config
 cjs.config.app_root = process.cwd();
 // load locales
 cjs.i18n = core.loadLocales();
 core.loadCustomConfig();
-const log = require("../base/log");
+const log = require("../base/log.cjs");
 
 function cliBase() {
     this.init = () => {
@@ -21,7 +21,7 @@ function cliBase() {
         const source = fs.readFileSync(path.join(__dirname, "../templates/init/crabjs.template"), {encoding: 'utf-8'});
         const template = handlebars.compile(source);
 
-        let utils = require("./utils");
+        let utils = require("./utils.cjs");
         let generated_options = {
             "encryption_key": utils.UID("48"),
             "client_id": utils.UID("22"),

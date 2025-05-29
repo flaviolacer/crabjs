@@ -1,11 +1,11 @@
 {
   "name": "crabjs",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "repository": "https://github.com/flaviolacer/crabjs",
   "author": "Flavio Lacerda",
   "homepage": "https://github.com/flaviolacer/crabjs",
   "bin": {
-    "cjs": "./cli/run.js"
+    "cjs": "./cli/run.cjs"
   },
   "type" : "module",
   "exports": {
