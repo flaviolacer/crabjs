@@ -214,8 +214,11 @@ let generateRequestToken = async function (res, apiUserAuth) {
     // remove expired tokens
     await removeExpiredTokens();
 
-    if (!isEmpty(res))
+    if (!isEmpty(res)) {
+        response.authId = apiUserAuth.authId;
+        response.authUser = apiUserAuth.authUser;
         sendJson(res, response, 200);
+    }
     else
         return response;
 }
