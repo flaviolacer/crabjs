@@ -124,6 +124,8 @@ function MongoDBDriver() {
                 try {
                     if (isString(value))
                         return new MongoDB.ObjectId(value);
+                    else if (isObject(value) && value.hasOwnProperty("_id"))
+                        return value._id;
                     else return value
                 } catch (e) {
                     log.error(cjs.i18n.__("Error on converting ObjectId Field: '{{value}}'", {value: value}));
@@ -138,7 +140,7 @@ function MongoDBDriver() {
                     return encrypt_password(value);
             case "datetime":
             case "date":
-                return (value === "now") ? new Date() : (value instanceof Date) ? value : new Date(value);
+                return (value === "now") ? new Date() : (value instanceof Date) ? value : isObject(value) ? value : new Date(value);
             case "boolean":
             case "bool":
                 return !isBoolean(value) ? (isString(value) ? value === "true" : Boolean(value)) : value;
