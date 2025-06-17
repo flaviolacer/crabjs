@@ -86,5 +86,12 @@
 	"Swagger started!": "Swagger started!",
 	"Swagger address: \"": "Swagger address: \"",
 	"Entity definition not found. Missing create it \"{{name}}\"?": "Entity definition not found. Missing create it \"{{name}}\"?",
-	"Express method function ({{method}}) not found at \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n": "Express method function ({{method}}) not found at \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n"
+	"Express method function ({{method}}) not found at \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n": "Express method function ({{method}}) not found at \"{{routeName}}\" on controller \"{{routeInfoName}}\"\n",
+	"Get entity from repository remote": "Get entity from repository remote",
+	"Get entity from repository video": "Get entity from repository video",
+	"Get entity from repository image": "Get entity from repository image",
+	"Get entity from repository content_drm": "Get entity from repository content_drm",
+	"Get entity from repository folder": "Get entity from repository folder",
+	"Get entity from repository equipment": "Get entity from repository equipment",
+	"Get entity from repository group": "Get entity from repository group"
 }

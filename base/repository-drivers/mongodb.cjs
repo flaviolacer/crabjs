@@ -43,11 +43,15 @@ function MongoDBDriver() {
                 switch (filterKey) {
                     case "__remove":
                         filter['$unset'] = {};
-                        if (isString(filter["__remove"]))
+                        if (isString(filter["__remove"])) {
                             filter['$unset'][filter["__remove"]] = "";
+                            delete filter[filter["__remove"]];
+                        }
                         else if (isArray(filter["__remove"]))
-                            for (let i = 0; i < filter["__remove"].length; i++)
-                                filter['$unset'][filter["__remove"][i]] = ""
+                            for (let i = 0; i < filter["__remove"].length; i++) {
+                                filter['$unset'][filter["__remove"][i]] = "";
+                                delete filter[filter["__remove"][i]];
+                            }
 
                         delete filter[filterKey];
                         break;

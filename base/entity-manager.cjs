@@ -272,8 +272,7 @@ function EntityManager() {
      * @param options
      * @returns {Promise<unknown>}
      */
-    this.getEntity = (entity, filter, options) => {
-        options = options || {};
+    this.getEntity = (entity, filter, options = {}) => {
         // convert array to object
         if (isArray(filter))
             filter = Object.assign({}, filter);
@@ -303,7 +302,7 @@ function EntityManager() {
             let entityData = null;
             try {
                 entityData = await repositoryManager.findOne({
-                    repository: entityDefinitions.entity.repository,
+                    repository: (entityDefinitions.entity && entityDefinitions.entity.data ) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
                     getEntityDefinition: getEntityDefinition,
@@ -335,8 +334,7 @@ function EntityManager() {
      * @param options
      * @returns {Promise<unknown>}
      */
-    this.getEntities = (entity, filter, options) => {
-        options = options || {};
+    this.getEntities = (entity, filter, options = {}) => {
         return new Promise(async (resolve, reject) => {
             if (isEmpty(entity)) {
                 log.error(cjs.i18n.__("Need to specify the entity to load data."));
@@ -433,7 +431,7 @@ function EntityManager() {
             data.__definitions = entityDefinitions;
             try {
                 entityData = await repositoryManager.save({
-                    repository: entityDefinitions.entity.repository,
+                    repository: (entityDefinitions.entity && entityDefinitions.entity.data ) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
                     entity: data,
                     definitions: entityDefinitions,
                     filter: filter
@@ -479,7 +477,7 @@ function EntityManager() {
             let entityDefinitions = getEntityDefinition(entity);
             try {
                 let response = await repositoryManager.remove({
-                    repository: entityDefinitions.entity.repository,
+                    repository: (entityDefinitions.entity && entityDefinitions.entity.data ) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
                     filter: filter
