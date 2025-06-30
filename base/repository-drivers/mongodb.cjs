@@ -149,8 +149,13 @@ function MongoDBDriver() {
             case "bool":
                 return !isBoolean(value) ? (isString(value) ? value === "true" : Boolean(value)) : value;
             case "object":
-            case "array":
                 return isString(value) ? isObject(value) ? value.data : JSON.parse(value) : value;
+            case "array":
+                try {
+                    return isString(value) ? isObject(value) ? value.data : JSON.parse(value) : value;
+                } catch (e) {
+                    return value
+                }
             default:
                 return value;
         }
@@ -757,7 +762,7 @@ function MongoDBDriver() {
 
     this.newId = () => new MongoDB.ObjectId();
 
-    this.ObjectId = (objId) => MongoDB.ObjectId(objId);
+    this.ObjectId = (objId) => new MongoDB.ObjectId(objId);
 
     this.longFromNumber = MongoDB.Long.fromNumber
 }

@@ -93,5 +93,6 @@
 	"Get entity from repository content_drm": "Get entity from repository content_drm",
 	"Get entity from repository folder": "Get entity from repository folder",
 	"Get entity from repository equipment": "Get entity from repository equipment",
-	"Get entity from repository group": "Get entity from repository group"
+	"Get entity from repository group": "Get entity from repository group",
+	"Get entity from repository content": "Get entity from repository content"
 }

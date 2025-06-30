@@ -152,8 +152,7 @@ global.lowerFirstLetter = string => {
     return string.charAt(0).toLowerCase() + string.slice(1);
 }
 
-//global.crypto = require('crypto');
-const {createHmac, pbkdf2, randomBytes} = require('node:crypto');
+const {createHmac, pbkdf2Sync, randomBytes} = require('node:crypto');
 global.hashHmac = function (text) {
     return createHmac('sha256', 'fgdgdfgcvbcvbvcbcv#')
         .update(text)
@@ -175,15 +174,12 @@ global.verify_password = function (dbString, password) {
     if (typeof password !== "string")
         password = password.toString();
 
-    pbkdf2(password, salt, iterations, hashLength, crypt_info[1], function (err, key) {
-        if (err)
-            throw err;
+    try {
+        const key = pbkdf2Sync(password, salt, iterations, hashLength, crypt_info[1]);
         keybase = key.toString('base64');
-    });
-
-    require('deasync').loopWhile(function () {
-        return !keybase;
-    });
+    } catch (err) {
+        throw err;
+    }
 
     return (keybase === old_hash);
 };
@@ -193,14 +189,12 @@ global.encrypt_password = function (password) {
     let iterations = 10000;
     let keybase = false;
 
-
-    pbkdf2(password, salt, iterations, 32, 'sha256', function (err, key) {
+    try {
+        const key = pbkdf2Sync(password, salt, iterations, 32, 'sha256');
         keybase = 'pbkdf2_sha256$10000$' + salt + '$' + key.toString('base64');
-    });
-
-    require('deasync').loopWhile(function () {
-        return !keybase;
-    });
+    } catch (err) {
+        throw err;
+    }
 
     return keybase;
 };
