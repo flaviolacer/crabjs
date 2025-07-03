@@ -34,6 +34,7 @@ function routerManager() {
             log.error('Unable to list files on directory: ' + err);
             return;
         }
+
         let swaggerDocument = {};
         for (let i = 0, j = files.length; i < j; i++) {
             let file = files[i];

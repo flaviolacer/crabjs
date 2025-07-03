@@ -55,6 +55,7 @@ function Util() {
         responseError.type = "error";
         if (data)
             responseError.data = data;
+
         res.status(code);
         res.json(responseError);
     }

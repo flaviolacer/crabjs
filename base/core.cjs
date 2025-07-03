@@ -145,6 +145,19 @@ function core() {
         expressInstance.engine('html', ejs.renderFile);
         expressInstance.set('view engine', 'html');
 
+        // configure cors
+        if (cjs.config.security.cors.allowedOrigins) {
+            expressInstance.use((req, res, next) => {
+                res.header('Access-Control-Allow-Origin', cjs.config.security.cors.allowedOrigins);
+                res.header('Access-Control-Allow-Methods', cjs.config.security.cors.allowedMethods);
+                res.header('Access-Control-Allow-Headers', cjs.config.security.cors.allowedHeaders);
+                if (req.method === "OPTIONS") {
+                    return res.sendStatus(200);
+                }
+                next();
+            });
+        }
+
         if (!noserver) {
             // middlewares
             let bodyParser = require('body-parser');

@@ -32,7 +32,12 @@
       }
     },
     "security_repository": false,
-    "security_entity": "__access_credential"
+    "security_entity": "__access_credential",
+    "cors" : {
+      "allowedOrigins": "*",
+      "allowedMethods" : "GET,POST,PUT,DELETE,OPTIONS",
+      "allowedHeaders": "*"
+    }
   },
   "language": "en",
   "local_storage": {
