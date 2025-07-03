@@ -146,7 +146,7 @@ function core() {
         expressInstance.set('view engine', 'html');
 
         // configure cors
-        if (cjs.config.security.cors.allowedOrigins) {
+        if (cjs.config.security && cjs.config.security.cors.allowedOrigins) {
             expressInstance.use((req, res, next) => {
                 res.header('Access-Control-Allow-Origin', cjs.config.security.cors.allowedOrigins);
                 res.header('Access-Control-Allow-Methods', cjs.config.security.cors.allowedMethods);
