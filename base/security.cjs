@@ -224,7 +224,7 @@ let generateRequestToken = async function (res, apiUserAuth) {
 }
 
 let normalizeRoute = (route) => {
-    return (route.startsWith('/') ? "" : "/") + route + ((route.endsWith('/') || route.contains('\\.')) ? "" : "/");
+    return (route.startsWith('/') ? "" : "/") + route + ((route.endsWith('/') || route.endsWith('.')) ? "" : "/");
 }
 
 let firstRequest = true;
