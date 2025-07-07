@@ -95,5 +95,6 @@
 	"Get entity from repository equipment": "Get entity from repository equipment",
 	"Get entity from repository group": "Get entity from repository group",
 	"Get entity from repository content": "Get entity from repository content",
-	"Cannot associate default entity methods to controller \"{{controller}}\". Missing default functions ou wrong functions format?": "Cannot associate default entity methods to controller \"{{controller}}\". Missing default functions ou wrong functions format?"
+	"Cannot associate default entity methods to controller \"{{controller}}\". Missing default functions ou wrong functions format?": "Cannot associate default entity methods to controller \"{{controller}}\". Missing default functions ou wrong functions format?",
+	"Get entity from repository user_content": "Get entity from repository user_content"
 }
