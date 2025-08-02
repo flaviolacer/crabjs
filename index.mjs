@@ -28,7 +28,7 @@ import repositoryManager from "./base/repository-manager.cjs";
  * @param {bool} noserver
  * @returns {Cjs}
  */
-function start(appDir, noserver) {
+function start(appDir, noserver = false) {
     process.env.DEBUG = "i18n:debug";
     cjs.entityManager = null;
     // global config

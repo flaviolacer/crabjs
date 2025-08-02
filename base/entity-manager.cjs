@@ -138,6 +138,10 @@ function EntityManager() {
         // load entity definitions
         newEntityInstantiated.__definitions = definitions;
 
+        // set correct connection repository
+        if (newEntityInstantiated.__definitions && newEntityInstantiated.__definitions.entity && newEntityInstantiated.__definitions.entity.data && newEntityInstantiated.__definitions.entity.data.DbName)
+            newEntityInstantiated.repository = newEntityInstantiated.__definitions.entity.data.DbName;
+
         // map annotation entity properties to the object
         for (let i = 0, j = annotationMapKeys.length; i < j; i++)
             newEntityInstantiated[lowerFirstLetter(annotationMapKeys[i])] = newEntityInstantiated.__definitions.entity.data[annotationMapKeys[i]];
@@ -302,7 +306,7 @@ function EntityManager() {
             let entityData = null;
             try {
                 entityData = await repositoryManager.findOne({
-                    repository: (entityDefinitions.entity && entityDefinitions.entity.data ) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
+                    repository: (entityDefinitions.entity && entityDefinitions.entity.data) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
                     getEntityDefinition: getEntityDefinition,
@@ -353,7 +357,7 @@ function EntityManager() {
 
             try {
                 let entities = await repositoryManager.find({
-                    repository: (entityDefinitions.entity && entityDefinitions.entity.data ) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
+                    repository: (entityDefinitions.entity && entityDefinitions.entity.data) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
                     getEntityDefinition: getEntityDefinition,
@@ -431,7 +435,7 @@ function EntityManager() {
             data.__definitions = entityDefinitions;
             try {
                 entityData = await repositoryManager.save({
-                    repository: (entityDefinitions.entity && entityDefinitions.entity.data ) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
+                    repository: (entityDefinitions.entity && entityDefinitions.entity.data) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
                     entity: data,
                     definitions: entityDefinitions,
                     filter: filter
@@ -477,7 +481,7 @@ function EntityManager() {
             let entityDefinitions = getEntityDefinition(entity);
             try {
                 let response = await repositoryManager.remove({
-                    repository: (entityDefinitions.entity && entityDefinitions.entity.data ) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
+                    repository: (entityDefinitions.entity && entityDefinitions.entity.data) ? entityDefinitions.entity.data.dbName || entityDefinitions.entity.data.DbName : null,
                     entity: entityDefinitions.entity.data.RepositoryName || entity,
                     definitions: entityDefinitions,
                     filter: filter

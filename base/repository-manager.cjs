@@ -65,7 +65,7 @@ class RepositoryManager {
 
     async sendCommand(options) {
         let repository = options.repository || options.entity.repository;
-        let conn = this.getConnection(options.repository);
+        let conn = this.getConnection(repository);
 
         if (isEmpty(conn)) {
             log.error(cjs.i18n.__(options.__errorMessage, {

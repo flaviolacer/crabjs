@@ -9,6 +9,9 @@ class Cjs {
     static configSecureCredentials;
     static i18n;
     static getControllerEntityBase;
+    static app;
+    static repositoryManager;
+    static response;
 }
 
 module.exports = Cjs;
