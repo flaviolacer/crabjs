@@ -444,10 +444,7 @@ function MongoDBDriver() {
         }
 
         try {
-            return await db.collection(options.collection).findOneAndUpdate(options.filter, options.update, {
-                upsert: true,
-                returnNewDocument: true
-            });
+            return await db.collection(options.collection).findOneAndUpdate(options.filter, options.update);
         } catch (e) {
             log.error(e);
             return null;
