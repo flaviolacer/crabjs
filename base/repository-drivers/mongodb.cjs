@@ -263,10 +263,6 @@ function MongoDBDriver() {
 
             if (!found && !params.filter["__late_match"]) pipeline.push({$match: filter});
 
-            // create pipeline for count
-            let pipeline_count = pipeline.clone();
-            pipeline_count.push({"$count": "count"});
-
             // check if has load
             if (!isEmpty(options.load)) {
                 if (!isArray(options.load))
@@ -298,6 +294,10 @@ function MongoDBDriver() {
                 pipeline.push({$match: filter});
                 delete params.filter["__late_match"];
             }
+
+            // create pipeline for count
+            let pipeline_count = pipeline.clone();
+            pipeline_count.push({"$count": "count"});
 
             if (params.filter["__sort"]) {
                 options.sort = params.filter["__sort"];
@@ -444,7 +444,10 @@ function MongoDBDriver() {
         }
 
         try {
-            return await db.collection(options.collection).findOneAndUpdate(options.filter, options.update);
+            return await db.collection(options.collection).findOneAndUpdate(options.filter, options.update, {
+                upsert: true,
+                returnNewDocument: true
+            });
         } catch (e) {
             log.error(e);
             return null;
