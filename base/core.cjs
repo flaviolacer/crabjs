@@ -151,6 +151,7 @@ function core() {
                 res.header('Access-Control-Allow-Origin', cjs.config.security.cors.allowedOrigins);
                 res.header('Access-Control-Allow-Methods', cjs.config.security.cors.allowedMethods);
                 res.header('Access-Control-Allow-Headers', cjs.config.security.cors.allowedHeaders);
+                res.header('Access-Control-Allow-Private-Network', true);
                 if (req.method === "OPTIONS") {
                     return res.sendStatus(200);
                 }

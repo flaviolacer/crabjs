@@ -62,7 +62,7 @@ function start(appDir, noserver = false) {
      */
     cjs.response = (res, data, code, options) => {
         options = options || {};
-        options.error = options.error || false;
+        options.error = options.error || (!isEmpty(code) && code !== 200) || false;
         if (options.error)
             utils.responseError(res, data, code, options.data);
         else
