@@ -1,19 +1,19 @@
 {
   "name": "crabjs",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "repository": "https://github.com/flaviolacer/crabjs",
   "author": "Flavio Lacerda",
   "homepage": "https://github.com/flaviolacer/crabjs",
   "bin": {
     "cjs": "./cli/run.cjs"
   },
-  "type" : "module",
+  "type": "module",
   "exports": {
     "import": "./index.mjs",
     "require": "./index.cjs"
   },
   "dependencies": {
-    "body-parser": "^1.20.3",
+    "body-parser": "^1.20.4",
     "deasync": "^0.1.30",
     "dotenv-defaults": "^5.0.2",
     "ejs": "^3.1.10",
@@ -25,7 +25,7 @@
     "mocha": "^11.1.0",
     "mongodb": "^6.13.1",
     "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^2.0.2",
     "path": "^0.12.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
@@ -36,7 +36,7 @@
     "annotation"
   ],
   "devDependencies": {
-    "axios": "^1.8.4",
+    "axios": "^1.13.2",
     "mocha": "^11.1.0"
   },
   "scripts": {

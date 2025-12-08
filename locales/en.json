@@ -98,5 +98,9 @@
 	"Cannot associate default entity methods to controller \"{{controller}}\". Missing default functions ou wrong functions format?": "Cannot associate default entity methods to controller \"{{controller}}\". Missing default functions ou wrong functions format?",
 	"Get entity from repository user_content": "Get entity from repository user_content",
 	"Get entity from repository live": "Get entity from repository live",
-	"Cannot get \"{{entityName}}\" entities": "Cannot get \"{{entityName}}\" entities"
+	"Cannot get \"{{entityName}}\" entities": "Cannot get \"{{entityName}}\" entities",
+	"Get entity from repository plan": "Get entity from repository plan",
+	"Get entity from repository coupon": "Get entity from repository coupon",
+	"Get entity from repository subscription": "Get entity from repository subscription",
+	"Get entity from repository bill": "Get entity from repository bill"
 }

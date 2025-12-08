@@ -25,10 +25,11 @@ import repositoryManager from "./base/repository-manager.cjs";
  */
 /**
  * @param {string} appDir
- * @param {bool} noserver
+ * @param options
  * @returns {Cjs}
  */
-function start(appDir, noserver = false) {
+function start(appDir, options = {}) {
+    options.noserver = options.noserver || false;
     process.env.DEBUG = "i18n:debug";
     cjs.entityManager = null;
     // global config
@@ -41,8 +42,8 @@ function start(appDir, noserver = false) {
     log.info("Initializing CrabJS...");
     log.info("Loading Libraries...");
     // initializing express server
-    core.initExpress(noserver);
-    if (!noserver) {
+    core.initExpress(options.noserver, options);
+    if (!options.noserver) {
         log.info("Loading Routes...");
         routerManager.init(core);
     }

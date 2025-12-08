@@ -93,9 +93,9 @@ function ControllerEntityBase() {
 
         let queryFields = req.query || {};
         let options = {};
-        if (!isEmpty(queryFields.options)) {
-            options = queryFields.options;
-            delete queryFields.options;
+        if (!isEmpty(queryFields.__options)) {
+            options = queryFields.__options;
+            delete queryFields.__options;
         }
         filter = filter || queryFields;
 

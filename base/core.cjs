@@ -138,7 +138,7 @@ function core() {
     /**
      * Initialize express server
      */
-    this.initExpress = (noserver) => {
+    this.initExpress = (noserver, options = {}) => {
         // set views dir and template engine
         expressInstance.set('views', path.join(cjs.config.app_root, 'views'));
         let ejs = require('ejs');
@@ -163,6 +163,11 @@ function core() {
             // middlewares
             let bodyParser = require('body-parser');
 
+            // ealier middlewares
+            if (options.pre_middlewares)
+                for (let i = 0, j = options.pre_middlewares.length; i < j; i++)
+                    expressInstance.use(options.pre_middlewares)
+
             // configure the app to use bodyParser()
             expressInstance.use(bodyParser.urlencoded({
                 extended: true,
@@ -181,19 +186,6 @@ function core() {
             // set security
             const Security = require("./security.cjs");
             instance.security = Security;
-
-            /*expressInstance.use((req, res, next) => {
-                //if (req.get('Content-Type') === "application/json")
-                bodyParser.json()(req, res, err => {
-                    if (err) {
-                        const utils = require('./utils');
-                        utils.responseError(res, cjs.i18n.__('Error parsing JSON content on body. Check the syntax.'), 406);
-                        return;
-                    }
-
-                    next();
-                });
-            });*/
 
             expressInstance.use(express.json({ limit: cjs.config.post_max_size }));
 
@@ -219,6 +211,11 @@ function core() {
             });
 
             expressInstance.use(Security);
+            // last middlewares
+            if (options.post_middlewares)
+                for (let i = 0, j = options.post_middlewares.length; i < j; i++)
+                    expressInstance.use(options.post_middlewares)
+
             //expressInstance.use(logger('Response time\: :response-time\\n'));
             // catch not found
             // start server

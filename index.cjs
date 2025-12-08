@@ -23,10 +23,10 @@ const path = require("path");
  */
 /**
  * @param {string} appDir
- * @param {bool} noserver
+ * @param options
  * @returns {Cjs}
  */
-exports.start = function (appDir, noserver = false) {
+exports.start = function (appDir, options = {}) {
     process.env.DEBUG = "i18n:debug";
     cjs.entityManager = null;
     // global config
@@ -39,8 +39,8 @@ exports.start = function (appDir, noserver = false) {
     log.info("Initializing CrabJS...");
     log.info("Loading Libraries...");
     // initializing express server
-    core.initExpress(noserver);
-    if (!noserver) {
+    core.initExpress(options.noserver, options);
+    if (!options.noserver) {
         log.info("Loading Routes...");
         routerManager.init(core);
     }
