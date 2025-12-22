@@ -5,7 +5,7 @@ name: CrabJS
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   build:
@@ -34,11 +34,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
+      id-token: write # Permite gerar o token para o npm
+      contents: read  # Permite ler o código
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm publish --provenance --access public
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
