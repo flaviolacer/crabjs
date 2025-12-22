@@ -1,6 +1,6 @@
 {
   "name": "crabjs",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "CrabJS is a powerfull API Framework that works with a lot of outstanding modules and is fully configured by annotations.",
   "repository": "https://github.com/flaviolacer/crabjs",
   "author": "Flavio Lacerda",
