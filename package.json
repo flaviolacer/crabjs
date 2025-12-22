@@ -4,7 +4,7 @@
   "description": "CrabJS is a powerful API Framework that works with a lot of outstanding modules and is fully configured by annotations.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/flaviolacer/crabjs.git"
+    "url": "git+https://github.com/flaviolacer/crabjs.git"
   },
   "publishConfig": {
     "access": "public",
