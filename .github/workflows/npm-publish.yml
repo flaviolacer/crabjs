@@ -33,7 +33,6 @@ jobs:
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
-    environment: production
     permissions:
       id-token: write
       contents: read
