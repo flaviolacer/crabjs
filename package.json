@@ -6,6 +6,10 @@
     "type": "git",
     "url": "https://github.com/flaviolacer/crabjs.git"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "author": "Flavio Lacerda",
   "homepage": "https://github.com/flaviolacer/crabjs",
   "bin": {
