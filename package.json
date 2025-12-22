@@ -1,12 +1,15 @@
 {
   "name": "crabjs",
   "version": "2.1.4",
-  "description": "CrabJS is a powerfull API Framework that works with a lot of outstanding modules and is fully configured by annotations.",
-  "repository": "https://github.com/flaviolacer/crabjs",
+  "description": "CrabJS is a powerful API Framework that works with a lot of outstanding modules and is fully configured by annotations.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flaviolacer/crabjs.git"
+  },
   "author": "Flavio Lacerda",
   "homepage": "https://github.com/flaviolacer/crabjs",
   "bin": {
-    "cjs": "./cli/run.cjs"
+    "cjs": "cli/run.cjs"
   },
   "type": "module",
   "exports": {
