@@ -436,7 +436,7 @@ function MongoDBDriver() {
         });
     };
 
-    this.findOneAndUpdate = async (options) => {
+    this.findOneAndUpdate = async (params) => {
         let db = await this.getDb();
         if (!db) {
             log.error(cjs.i18n.__("Cannot run findAndModify"));
@@ -444,7 +444,7 @@ function MongoDBDriver() {
         }
 
         try {
-            return await db.collection(options.collection).findOneAndUpdate(options.filter, options.update, {
+            return await db.collection(params.collection).findOneAndUpdate(params.filter, params.update, params.options || {
                 upsert: true,
                 returnNewDocument: true
             });
