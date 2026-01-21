@@ -102,5 +102,6 @@
 	"Get entity from repository plan": "Get entity from repository plan",
 	"Get entity from repository coupon": "Get entity from repository coupon",
 	"Get entity from repository subscription": "Get entity from repository subscription",
-	"Get entity from repository bill": "Get entity from repository bill"
+	"Get entity from repository bill": "Get entity from repository bill",
+	"Get entity from repository invoice": "Get entity from repository invoice"
 }

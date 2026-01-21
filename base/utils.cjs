@@ -46,15 +46,13 @@ function Util() {
         return nonce;
     };
 
-    this.responseError = function (res, message, code, data) {
+    this.responseError = function (res, content, code) {
         if (isEmpty(res) || res.headersSent) return;
 
         code = code || 500;
         let ResponseError = require("./response-error.cjs");
-        let responseError = new ResponseError(message, code);
+        let responseError = new ResponseError(content, code);
         responseError.type = "error";
-        if (data)
-            responseError.data = data;
 
         res.status(code);
         res.json(responseError);

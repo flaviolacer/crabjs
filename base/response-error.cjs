@@ -1,5 +1,5 @@
-function ResponseError(message, code) {
-    this.message = message;
+function ResponseError(content, code) {
+    this.content = content;
     this.code = code;
 }
 

@@ -56,16 +56,14 @@ exports.start = function (appDir, options = {}) {
      * @param res
      * @param data
      * @param code
-     * @param options
      */
-    cjs.response = (res, data, code, options) => {
-        options = options || {};
-        options.error = options.error || false;
-        if (options.error)
-            utils.responseError(res, data, code, options.data);
+    cjs.response = (res, data, code) => {
+        if ((!isEmpty(code) && code !== 200))
+            utils.responseError(res, data, code);
         else
             utils.responseData(res, data);
     }
+
     // return cjs object to app
     /** @type {Cjs} */
     return cjs;

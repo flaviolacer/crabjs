@@ -31,7 +31,7 @@ function routerManager() {
         try {
             files = fs.readdirSync(cjs.config.server_controllers_path)
         } catch (e) {
-            log.error('Unable to list files on directory: ' + err);
+            log.error('Unable to list files on directory: ' + e);
             return;
         }
 
