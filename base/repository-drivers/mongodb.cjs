@@ -18,6 +18,8 @@ function MongoDBDriver() {
         serverSelectionTimeoutMS: 5000
     };
 
+    let escapeRegExp = value => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
     let convertFieldsToTypeDefinitions = (fields, definitions) => {
         let whereKeys = Object.keys(fields);
         for (let i = 0, j = whereKeys.length; i < j; i++)
@@ -71,7 +73,7 @@ function MongoDBDriver() {
                             termInfo["fields"] = termInfo["fields"].split(",");
                         for (let i = 0; i < termInfo["fields"].length; i++) {
                             let _orObj = {};
-                            _orObj[termInfo["fields"][i]] = new RegExp(termInfo["value"], "i");
+                            _orObj[termInfo["fields"][i]] = new RegExp(escapeRegExp(termInfo["value"]), "i");
                             _orSearch.push(_orObj);
                         }
 
@@ -89,6 +91,8 @@ function MongoDBDriver() {
                         if (filterValueKey.startsWith("__")) { // future in case need
                             switch (filterValueKey) {
                                 case "__like":
+                                    filter[filterKey] = new RegExp(escapeRegExp(filterValueParsed[filterValueKey]), "i");
+                                    break;
                                 case "__regex":
                                     filter[filterKey] = new RegExp(filterValueParsed[filterValueKey], "i");
                                     break;

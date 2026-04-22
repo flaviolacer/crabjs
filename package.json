@@ -1,6 +1,6 @@
 {
   "name": "crabjs",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "description": "CrabJS is a powerful API Framework that works with a lot of outstanding modules and is fully configured by annotations.",
   "repository": {
     "type": "git",
@@ -27,13 +27,13 @@
     "ejs": "^3.1.10",
     "express": "^4.21.2",
     "flat": "^6.0.1",
-    "handlebars": "^4.7.8",
+    "handlebars": "^4.7.9",
     "i18n": "^0.15.1",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "mocha": "^11.1.0",
     "mongodb": "^6.13.1",
     "morgan": "^1.10.0",
-    "multer": "^2.0.2",
+    "multer": "^2.1.1",
     "path": "^0.12.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
@@ -44,7 +44,7 @@
     "annotation"
   ],
   "devDependencies": {
-    "axios": "^1.13.2",
+    "axios": "^1.15.2",
     "mocha": "^11.1.0"
   },
   "scripts": {
