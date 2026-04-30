@@ -225,7 +225,11 @@ class tokensUsers {
         this.removeExpired = async () => {
             // remove revoked tokens
             let revokedStorage = await this.em.loadEntity(this.entity);
-            revokedStorage.removeExpired();
+            if (isEmpty(revokedStorage) || typeof revokedStorage.removeExpired !== "function") {
+                log.error(`Token storage entity "${this.entity}" could not be loaded or has no removeExpired() method.`);
+                return;
+            }
+            await revokedStorage.removeExpired();
         }
         return this;
     }
