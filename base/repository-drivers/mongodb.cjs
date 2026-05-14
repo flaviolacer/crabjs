@@ -11,6 +11,18 @@ function MongoDBDriver() {
     this.db = null;
     this.client = null;
 
+    let buildInvalidObjectIdError = (value, meta = {}, cause) => {
+        let err = new Error(`Invalid ObjectId for field "${meta.field || meta.fieldName || "unknown"}"`, 400, cause?.stack);
+        err.name = "InvalidObjectIdError";
+        err.statusCode = 400;
+        err.error_code = Constants.FIELD_VALUE_ERROR;
+        err.meta = extend({
+            value: value
+        }, meta);
+        err.cause = cause;
+        return err;
+    };
+
     let default_options = {
         maxPoolSize: 10,
         wtimeoutMS: 2500,
@@ -20,17 +32,29 @@ function MongoDBDriver() {
 
     let escapeRegExp = value => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    let convertFieldsToTypeDefinitions = (fields, definitions) => {
+    let convertFieldsToTypeDefinitions = (fields, definitions, meta = {}) => {
         let whereKeys = Object.keys(fields);
         for (let i = 0, j = whereKeys.length; i < j; i++)
             if (definitions.fields[whereKeys[i]]) {
                 let fieldKey = whereKeys[i];
                 if (!isEmpty(definitions.fields[whereKeys[i]].field) && definitions.fields[whereKeys[i]].field !== whereKeys[i]) {
                     fieldKey = definitions.fields[whereKeys[i]].field;
-                    fields[fieldKey] = this.setType(fields[whereKeys[i]], definitions.fields[whereKeys[i]].type);
+                    fields[fieldKey] = this.setType(fields[whereKeys[i]], definitions.fields[whereKeys[i]].type, {
+                        entity: meta.entity,
+                        operation: meta.operation,
+                        field: whereKeys[i],
+                        fieldName: fieldKey,
+                        source: meta.source || "filter"
+                    });
                     delete fields[whereKeys[i]];
                 } else
-                    fields[fieldKey] = this.setType(fields[fieldKey], definitions.fields[fieldKey].type);
+                    fields[fieldKey] = this.setType(fields[fieldKey], definitions.fields[fieldKey].type, {
+                        entity: meta.entity,
+                        operation: meta.operation,
+                        field: fieldKey,
+                        fieldName: fieldKey,
+                        source: meta.source || "filter"
+                    });
             }
     }
 
@@ -99,7 +123,13 @@ function MongoDBDriver() {
                                 case "__in":
                                     let in_value = filterValueParsed[filterValueKey];
                                     if (isArray(in_value)) {
-                                        in_value = in_value.map(_value => instance.setType(_value, definitions.fields[filterKey].type));
+                                        in_value = in_value.map(_value => instance.setType(_value, definitions.fields[filterKey].type, {
+                                            entity: definitions?.entity?.fname || definitions?.entity?.data?.RepositoryName,
+                                            operation: "find",
+                                            field: filterKey,
+                                            fieldName: filterKey,
+                                            source: "__in"
+                                        }));
                                         filter[filterKey] = {$in: in_value};
                                     }
                                     break;
@@ -113,7 +143,7 @@ function MongoDBDriver() {
         }
     };
 
-    this.setType = (value, type) => {
+    this.setType = (value, type, meta = {}) => {
         type = type || "";
         switch (type.toLowerCase().trim()) {
             case "long":
@@ -136,8 +166,7 @@ function MongoDBDriver() {
                         return value._id;
                     else return value
                 } catch (e) {
-                    log.error(cjs.i18n.__("Error on converting ObjectId Field: '{{value}}'", {value: value}));
-                    throw new Error(e);
+                    throw buildInvalidObjectIdError(value, meta, e);
                 }
             case "password":
                 if (isObject(value) && value.__plain)
@@ -236,10 +265,14 @@ function MongoDBDriver() {
 
             // convert fields to types
             try {
-                convertFieldsToTypeDefinitions(filter, params.definitions);
+                convertFieldsToTypeDefinitions(filter, params.definitions, {
+                    entity: params.entity,
+                    operation: "find",
+                    source: "filter"
+                });
             } catch (e) {
                 log.error(e.message);
-                reject({
+                reject((e && e.name === "InvalidObjectIdError") ? e : {
                     error_message: cjs.i18n.__("Undefined error on trying to convert type definitions of entity \"{{entityName}}\"", {entityName: params.entity}),
                     error_code: Constants.UNDEFINED_ERROR
                 });
@@ -383,10 +416,14 @@ function MongoDBDriver() {
             //convert fields on filter for the right type
             // convert fields to types
             try {
-                convertFieldsToTypeDefinitions(filter, params.definitions);
+                convertFieldsToTypeDefinitions(filter, params.definitions, {
+                    entity: params.entity,
+                    operation: "findOne",
+                    source: "filter"
+                });
             } catch (e) {
                 log.error(e.message);
-                reject({
+                reject((e && e.name === "InvalidObjectIdError") ? e : {
                     error: true,
                     error_message: cjs.i18n.__("Undefined error on trying to convert type definitions of entity \"{{entityName}}\"", {entityName: params.entity}),
                     error_code: Constants.UNDEFINED_ERROR
@@ -483,7 +520,13 @@ function MongoDBDriver() {
                 for (let i = 0, j = Pks.length; i < j; i++) {
                     let fieldRef = Pks[i].fname;
                     let fieldName = (isEmpty(Pks[i].data.field)) ? Pks[i].fname : Pks[i].data.field;
-                    if (!isEmpty(entity[fieldRef]) || MongoDB.ObjectId.isValid(entity[fieldRef])) filter[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
+                    if (!isEmpty(entity[fieldRef]) || MongoDB.ObjectId.isValid(entity[fieldRef])) filter[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type, {
+                        entity: entity.entityName,
+                        operation: "save",
+                        field: fieldRef,
+                        fieldName: fieldName,
+                        source: "primaryKey"
+                    });
                 }
             }
 
@@ -517,15 +560,27 @@ function MongoDBDriver() {
 
                 try {
                     if (!isEmpty(entity[fieldRef]))
-                        entityPersistInfo[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type);
+                        entityPersistInfo[fieldName] = this.setType(entity[fieldRef], fields[fieldRef].type, {
+                            entity: entity.entityName,
+                            operation: "save",
+                            field: fieldRef,
+                            fieldName: fieldName,
+                            source: "entity"
+                        });
                     else if (!isEmpty(fields[fieldRef].defaultValue) && isEmpty(filter))
-                        fieldDefaultValues[fieldName] = this.setType(fields[fieldRef].defaultValue, fields[fieldRef].type);
+                        fieldDefaultValues[fieldName] = this.setType(fields[fieldRef].defaultValue, fields[fieldRef].type, {
+                            entity: entity.entityName,
+                            operation: "save",
+                            field: fieldRef,
+                            fieldName: fieldName,
+                            source: "defaultValue"
+                        });
                 } catch (e) {
                     log.error(cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.", {
                         entityName: entity.entityName,
                         fieldName: fieldRef
                     }));
-                    reject({
+                    reject((e && e.name === "InvalidObjectIdError") ? e : {
                         error: true,
                         error_message: cjs.i18n.__("Cannot save entity {{entityName}}. Error set value on field {{fieldName}}.", {
                             entityName: entity.entityName,
@@ -590,10 +645,14 @@ function MongoDBDriver() {
             } else { // update data
                 try {
                     // convert field names
-                    convertFieldsToTypeDefinitions(filter, entity.__definitions);
+                    convertFieldsToTypeDefinitions(filter, entity.__definitions, {
+                        entity: entity.entityName,
+                        operation: "save",
+                        source: "filter"
+                    });
                 } catch (e) {
                     log.error(e.message);
-                    reject({
+                    reject((e && e.name === "InvalidObjectIdError") ? e : {
                         error: true,
                         error_message: cjs.i18n.__("Undefined error on trying to convert type definitions of entity \"{{entityName}}\"", {entityName: entity.entityName}),
                         error_code: Constants.UNDEFINED_ERROR
@@ -684,7 +743,7 @@ function MongoDBDriver() {
                     convertFieldsToTypeDefinitions(filter, definitions);
                 } catch (e) {
                     log.error(e.message);
-                    reject({
+                    reject((e && e.name === "InvalidObjectIdError") ? e : {
                         error_message: cjs.i18n.__("Undefined error on trying to update entity \"{{entityName}}\"", {entityName: entity.entityName}),
                         error_code: Constants.UNDEFINED_ERROR
                     });

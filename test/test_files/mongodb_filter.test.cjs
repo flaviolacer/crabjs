@@ -43,6 +43,27 @@ const createDriver = () => {
 };
 
 describe("Testing MongoDB filter translation", function () {
+    it("raises a structured error for invalid objectId values", () => {
+        const driver = new MongoDBDriver();
+
+        try {
+            driver.setType("invalid-id", "objectId", {
+                entity: "product",
+                field: "_id",
+                operation: "find"
+            });
+            assert.fail("Expected InvalidObjectIdError to be thrown");
+        } catch (error) {
+            assert.equal(error.name, "InvalidObjectIdError");
+            assert.equal(error.statusCode, 400);
+            assert.equal(error.error_code, 6);
+            assert.equal(error.meta.entity, "product");
+            assert.equal(error.meta.field, "_id");
+            assert.equal(error.meta.operation, "find");
+            assert.equal(error.meta.value, "invalid-id");
+        }
+    });
+
     it("escapes term values before building RegExp filters", async () => {
         const {driver, aggregateCalls} = createDriver();
 

@@ -18,6 +18,45 @@ cjs.getControllerEntityBase = async (entity) => {
 
 function routerManager() {
     let instance = this;
+    let wrapRouteHandler = (handler, routeMeta = {}) => {
+        return async (req, res, next) => {
+            try {
+                return await handler(req, res, next);
+            } catch (e) {
+                let requestInfo = {
+                    method: req.method,
+                    url: req.originalUrl || req.url,
+                    params: req.params,
+                    query: req.query
+                };
+
+                log.error(JSON.stringify({
+                    event: "route_handler_error",
+                    route: routeMeta,
+                    request: requestInfo,
+                    error: {
+                        name: e?.name,
+                        message: e?.message,
+                        statusCode: e?.statusCode,
+                        meta: e?.meta
+                    }
+                }));
+
+                if (!isEmpty(res) && !res.headersSent) {
+                    if (e && e.name === "InvalidObjectIdError") {
+                        utils.responseError(res, "Invalid identifier", e.statusCode || 400);
+                        return;
+                    }
+
+                    utils.responseError(res, "Internal server error", 500);
+                    return;
+                }
+
+                if (typeof next === "function")
+                    next(e);
+            }
+        };
+    };
     /**
      * Load controller files
      * @param core
@@ -185,14 +224,26 @@ function routerManager() {
                                     swagger.insertRoute(swaggerOptions, swaggerDocument);
 
                                     if (method === "get" || method === "put" || method === "delete") {
-                                        newRoute[method]("/:filter", newControllerFileInstantiated["__" + method]);
+                                        newRoute[method]("/:filter", wrapRouteHandler(newControllerFileInstantiated["__" + method], {
+                                            controller: routesInfo.controllerRoute.fname,
+                                            entity: headerAnnotations["entity"],
+                                            method: method,
+                                            path: path.join(headerAnnotations.route, "/:filter"),
+                                            action: "__" + method
+                                        }));
                                         swaggerOptions.path = path.join(headerAnnotations.route, "/:filter");
                                         // insert route on swagger
                                         swaggerOptions.summary = headerAnnotations["sw" + method.toLowerCase() + "summaryfilter"] || swaggerOptions.summary;
                                         swaggerOptions.description = headerAnnotations["sw" + method.toLowerCase() + "descriptionfilter"] || swaggerOptions.description;
                                         swagger.insertRoute(swaggerOptions, swaggerDocument);
                                     }
-                                    newRoute[method]("/", newControllerFileInstantiated["__" + method]);
+                                    newRoute[method]("/", wrapRouteHandler(newControllerFileInstantiated["__" + method], {
+                                        controller: routesInfo.controllerRoute.fname,
+                                        entity: headerAnnotations["entity"],
+                                        method: method,
+                                        path: path.join(headerAnnotations.route, "/"),
+                                        action: "__" + method
+                                    }));
                                 } catch (e) {
                                     log.error(cjs.i18n.__('Cannot associate default entity methods to controller "{{controller}}". Missing default functions ou wrong functions format?', {
                                         controller: newControllerFileInstantiated.controllerName
@@ -298,7 +349,13 @@ function routerManager() {
                             cjs.scopeRoutes[routeComplete][route.data.method.toLowerCase()] = scopeList;
                         }
 
-                        newRoute[route.data.method.toLowerCase()](route.data.route, methodFunction);
+                        newRoute[route.data.method.toLowerCase()](route.data.route, wrapRouteHandler(methodFunction, {
+                            controller: routesInfo.controllerRoute.fname,
+                            entity: headerAnnotations["entity"],
+                            method: route.data.method.toLowerCase(),
+                            path: path.join(headerAnnotations.route, route.data.route),
+                            action: route.fname
+                        }));
                         if (route.data.hasOwnProperty("priority") || route.data.hasOwnProperty("prior"))
                             utils.sendRouteToFirstOnMethod(newRoute, route.data.method.toLowerCase());
                     } catch (e) {
