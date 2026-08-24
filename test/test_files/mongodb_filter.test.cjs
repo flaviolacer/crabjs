@@ -18,12 +18,16 @@ const definitions = {
         },
         description: {
             type: "string"
+        },
+        status: {
+            type: "string"
         }
     }
 };
 
 const createDriver = () => {
     const aggregateCalls = [];
+    const findOneCalls = [];
     const driver = new MongoDBDriver();
 
     driver.getDb = async () => driver.db;
@@ -35,11 +39,15 @@ const createDriver = () => {
                     next: async () => ({count: 0}),
                     toArray: async () => []
                 };
-            }
+            },
+            findOne: (filter) => {
+                findOneCalls.push(filter);
+                return Promise.resolve(null);
+            },
         })
     };
 
-    return {driver, aggregateCalls};
+    return {driver, aggregateCalls, findOneCalls};
 };
 
 describe("Testing MongoDB filter translation", function () {
@@ -116,5 +124,28 @@ describe("Testing MongoDB filter translation", function () {
 
         const explicitRegex = regexContext.aggregateCalls[1][0].$match.name;
         assert.equal(explicitRegex.source, "^ana.*\\[$");
+    });
+
+    it("translates supported filters before findOne queries", async () => {
+        const {driver, findOneCalls} = createDriver();
+
+        await driver.findOne({
+            entity: "product",
+            definitions,
+            filter: {
+                status: {
+                    __in: ["CONFIRMED", "RECEIVED"]
+                },
+                name: {
+                    __like: "Gaiz Total"
+                }
+            }
+        });
+
+        assert.deepEqual(findOneCalls[0].status, {
+            $in: ["CONFIRMED", "RECEIVED"]
+        });
+        assert.ok(findOneCalls[0].name instanceof RegExp);
+        assert.equal(findOneCalls[0].name.source, "Gaiz Total");
     });
 });

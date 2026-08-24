@@ -431,6 +431,11 @@ function MongoDBDriver() {
                 return false;
             }
 
+            // Keep single-record queries consistent with find(): translate
+            // public filter operators such as __in, __like and __regex before
+            // passing the filter to MongoDB.
+            translateFilter(filter, params.definitions);
+
             let collectionName = params.definitions.entity.data.RepositoryName || params.entity;
             try {
                 await db.collection(collectionName).findOne(filter).then(async (obj) => {
